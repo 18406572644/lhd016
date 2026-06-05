@@ -113,11 +113,15 @@ export default {
 <style lang="scss" scoped>
 .app-container {
   height: 100vh;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-container {
-  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .app-header {
@@ -171,22 +175,35 @@ export default {
   }
 }
 
+.main-container > .el-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .app-sidebar {
   background: $sidebar-bg;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
   transition: width 0.3s;
   overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+  flex-shrink: 0;
 }
 
 .app-main {
   background: $content-bg;
   padding: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .page-container {
   padding: 20px;
-  min-height: calc(100vh - 60px);
+  min-height: 100%;
 }
 
 .breadcrumb-container {
