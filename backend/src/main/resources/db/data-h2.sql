@@ -6,10 +6,10 @@ INSERT INTO supply_point (name, address, type, status, area, contact_person, con
 ('运河饮水点', '拱墅区运河广场', '饮水点', '维护中', '拱墅区', '赵六', '13800138004', 120.1456, 30.3210);
 
 -- 初始化维修点数据
-INSERT INTO repair_shop (name, address, level, area, service_scope, contact_person, contact_phone, staff_count, business_hours) VALUES
-('西湖一级维修中心', '西湖区体育场路150号', '一级', '西湖区', '整车维修、配件更换、保养服务', '刘师傅', '13900139001', 8, '08:00-20:00'),
-('滨江二级维修站', '滨江区江南大道100号', '二级', '滨江区', '普通维修、充气、补胎', '陈师傅', '13900139002', 4, '09:00-18:00'),
-('余杭三级维修点', '余杭区余杭塘路200号', '三级', '余杭区', '简单维修、应急处理', '周师傅', '13900139003', 2, '10:00-17:00');
+INSERT INTO repair_shop (name, address, longitude, latitude, level, area, service_scope, contact_person, contact_phone, staff_count, business_hours) VALUES
+('西湖一级维修中心', '西湖区体育场路150号', 120.1650, 30.2750, '一级', '西湖区', '车辆故障,身体不适,物资需求,其他', '刘师傅', '13900139001', 8, '08:00-20:00'),
+('滨江二级维修站', '滨江区江南大道100号', 120.2100, 30.2050, '二级', '滨江区', '车辆故障,物资需求', '陈师傅', '13900139002', 4, '09:00-18:00'),
+('余杭三级维修点', '余杭区余杭塘路200号', 120.0500, 30.2900, '三级', '余杭区', '车辆故障,应急处理', '周师傅', '13900139003', 2, '10:00-17:00');
 
 -- 初始化配件数据
 INSERT INTO spare_part (part_code, part_name, category, unit, stock_quantity, warning_threshold, unit_price, supplier, supply_point_id) VALUES
@@ -23,10 +23,10 @@ INSERT INTO spare_part (part_code, part_name, category, unit, stock_quantity, wa
 ('P008', '能量棒', '补给品', '个', 15, 30, 8.00, '康比特', 1);
 
 -- 初始化求助数据
-INSERT INTO help_request (requester_name, requester_phone, location, help_type, urgency, status, description) VALUES
-('小明', '13700137001', '滨江区江南大道附近', '车辆故障', '高', 'pending', '自行车链条断裂，无法继续骑行'),
-('小红', '13700137002', '西湖景区苏堤', '身体不适', '中', 'processing', '骑行中感觉头晕，需要休息和饮水'),
-('小刚', '13700137003', '余杭区未来科技城', '物资需求', '低', 'completed', '需要补充饮用水和能量补给');
+INSERT INTO help_request (requester_name, requester_phone, location, longitude, latitude, help_type, urgency, status, description, repair_shop_id, estimated_arrival_time) VALUES
+('小明', '13700137001', '滨江区江南大道附近', 120.2050, 30.2000, '车辆故障', '高', 'pending', '自行车链条断裂，无法继续骑行', 2, 15),
+('小红', '13700137002', '西湖景区苏堤', 120.1480, 30.2600, '身体不适', '中', 'processing', '骑行中感觉头晕，需要休息和饮水', 1, 10),
+('小刚', '13700137003', '余杭区未来科技城', 120.0300, 30.2850, '物资需求', '低', 'completed', '需要补充饮用水和能量补给', 3, 20);
 
 -- 初始化盘点数据
 INSERT INTO inventory_check (check_no, supply_point_id, supply_point_name, check_date, checker, status, total_items, diff_count, remark) VALUES

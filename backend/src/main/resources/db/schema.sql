@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS repair_shop (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     address VARCHAR(255) NOT NULL,
+    longitude DECIMAL(10,6),
+    latitude DECIMAL(10,6),
     level VARCHAR(50) NOT NULL,
     area VARCHAR(100),
     service_scope TEXT,
@@ -64,10 +66,14 @@ CREATE TABLE IF NOT EXISTS help_request (
     requester_name VARCHAR(50) NOT NULL,
     requester_phone VARCHAR(20) NOT NULL,
     location VARCHAR(255) NOT NULL,
+    longitude DECIMAL(10,6),
+    latitude DECIMAL(10,6),
     help_type VARCHAR(50) NOT NULL,
     urgency VARCHAR(20) NOT NULL DEFAULT '中',
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     description TEXT,
+    repair_shop_id BIGINT REFERENCES repair_shop(id),
+    estimated_arrival_time INTEGER,
     handler VARCHAR(50),
     handle_result TEXT,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +110,9 @@ CREATE TABLE IF NOT EXISTS check_detail (
 CREATE INDEX IF NOT EXISTS idx_spare_part_stock ON spare_part(stock_quantity, warning_threshold);
 CREATE INDEX IF NOT EXISTS idx_help_request_status ON help_request(status);
 CREATE INDEX IF NOT EXISTS idx_help_request_urgency ON help_request(urgency);
+CREATE INDEX IF NOT EXISTS idx_help_request_repair_shop ON help_request(repair_shop_id);
 CREATE INDEX IF NOT EXISTS idx_stock_record_part ON stock_record(part_id);
 CREATE INDEX IF NOT EXISTS idx_check_detail_check ON check_detail(check_id);
 CREATE INDEX IF NOT EXISTS idx_supply_point_area ON supply_point(area);
 CREATE INDEX IF NOT EXISTS idx_repair_shop_area ON repair_shop(area);
+CREATE INDEX IF NOT EXISTS idx_repair_shop_location ON repair_shop(longitude, latitude);

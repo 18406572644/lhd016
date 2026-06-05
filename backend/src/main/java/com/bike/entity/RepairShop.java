@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @TableName("repair_shop")
@@ -18,6 +19,10 @@ public class RepairShop implements Serializable {
     private String name;
 
     private String address;
+
+    private BigDecimal longitude;
+
+    private BigDecimal latitude;
 
     private String level;
 
@@ -68,6 +73,22 @@ public class RepairShop implements Serializable {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public BigDecimal getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(BigDecimal longitude) {
+        this.longitude = longitude;
+    }
+
+    public BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(BigDecimal latitude) {
+        this.latitude = latitude;
     }
 
     public String getLevel() {

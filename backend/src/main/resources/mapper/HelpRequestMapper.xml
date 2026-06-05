@@ -7,14 +7,33 @@
         <result column="requester_name" property="requesterName"/>
         <result column="requester_phone" property="requesterPhone"/>
         <result column="location" property="location"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
         <result column="help_type" property="helpType"/>
         <result column="urgency" property="urgency"/>
         <result column="status" property="status"/>
         <result column="description" property="description"/>
+        <result column="repair_shop_id" property="repairShopId"/>
+        <result column="estimated_arrival_time" property="estimatedArrivalTime"/>
         <result column="handler" property="handler"/>
         <result column="handle_result" property="handleResult"/>
         <result column="create_time" property="createTime"/>
         <result column="handle_time" property="handleTime"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.bike.entity.dto.HelpRequestVO" extends="BaseResultMap">
+        <association property="repairShop" javaType="com.bike.entity.RepairShop">
+            <id column="rs_id" property="id"/>
+            <result column="rs_name" property="name"/>
+            <result column="rs_address" property="address"/>
+            <result column="rs_longitude" property="longitude"/>
+            <result column="rs_latitude" property="latitude"/>
+            <result column="rs_level" property="level"/>
+            <result column="rs_area" property="area"/>
+            <result column="rs_service_scope" property="serviceScope"/>
+            <result column="rs_contact_person" property="contactPerson"/>
+            <result column="rs_contact_phone" property="contactPhone"/>
+        </association>
     </resultMap>
 
     <select id="selectPageByCondition" resultMap="BaseResultMap">
@@ -55,5 +74,68 @@
             END ASC,
             create_time DESC
         LIMIT 10
+    </select>
+
+    <select id="selectWorkloadByShop" resultType="java.util.Map">
+        SELECT repair_shop_id AS shopId, COUNT(*) AS workload
+        FROM help_request
+        WHERE status IN ('pending', 'processing')
+          AND repair_shop_id IS NOT NULL
+        GROUP BY repair_shop_id
+    </select>
+
+    <select id="selectPageWithRepairShop" resultMap="VOResultMap">
+        SELECT h.*,
+               r.id AS rs_id,
+               r.name AS rs_name,
+               r.address AS rs_address,
+               r.longitude AS rs_longitude,
+               r.latitude AS rs_latitude,
+               r.level AS rs_level,
+               r.area AS rs_area,
+               r.service_scope AS rs_service_scope,
+               r.contact_person AS rs_contact_person,
+               r.contact_phone AS rs_contact_phone
+        FROM help_request h
+        LEFT JOIN repair_shop r ON h.repair_shop_id = r.id
+        <where>
+            <if test="params.requesterName != null and params.requesterName != ''">
+                AND h.requester_name LIKE '%' || #{params.requesterName} || '%'
+            </if>
+            <if test="params.helpType != null and params.helpType != ''">
+                AND h.help_type = #{params.helpType}
+            </if>
+            <if test="params.urgency != null and params.urgency != ''">
+                AND h.urgency = #{params.urgency}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND h.status = #{params.status}
+            </if>
+        </where>
+        ORDER BY
+            CASE h.urgency
+                WHEN '紧急' THEN 1
+                WHEN '高' THEN 2
+                WHEN '中' THEN 3
+                WHEN '低' THEN 4
+            END ASC,
+            h.create_time DESC
+    </select>
+
+    <select id="selectDetailWithRepairShop" resultMap="VOResultMap">
+        SELECT h.*,
+               r.id AS rs_id,
+               r.name AS rs_name,
+               r.address AS rs_address,
+               r.longitude AS rs_longitude,
+               r.latitude AS rs_latitude,
+               r.level AS rs_level,
+               r.area AS rs_area,
+               r.service_scope AS rs_service_scope,
+               r.contact_person AS rs_contact_person,
+               r.contact_phone AS rs_contact_phone
+        FROM help_request h
+        LEFT JOIN repair_shop r ON h.repair_shop_id = r.id
+        WHERE h.id = #{id}
     </select>
 </mapper>

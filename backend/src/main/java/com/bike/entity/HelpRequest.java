@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @TableName("help_request")
@@ -23,6 +24,10 @@ public class HelpRequest implements Serializable {
 
     private String location;
 
+    private BigDecimal longitude;
+
+    private BigDecimal latitude;
+
     @TableField("help_type")
     private String helpType;
 
@@ -31,6 +36,12 @@ public class HelpRequest implements Serializable {
     private String status;
 
     private String description;
+
+    @TableField("repair_shop_id")
+    private Long repairShopId;
+
+    @TableField("estimated_arrival_time")
+    private Integer estimatedArrivalTime;
 
     private String handler;
 
@@ -77,6 +88,22 @@ public class HelpRequest implements Serializable {
         this.location = location;
     }
 
+    public BigDecimal getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(BigDecimal longitude) {
+        this.longitude = longitude;
+    }
+
+    public BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
     public String getHelpType() {
         return helpType;
     }
@@ -107,6 +134,22 @@ public class HelpRequest implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getRepairShopId() {
+        return repairShopId;
+    }
+
+    public void setRepairShopId(Long repairShopId) {
+        this.repairShopId = repairShopId;
+    }
+
+    public Integer getEstimatedArrivalTime() {
+        return estimatedArrivalTime;
+    }
+
+    public void setEstimatedArrivalTime(Integer estimatedArrivalTime) {
+        this.estimatedArrivalTime = estimatedArrivalTime;
     }
 
     public String getHandler() {
