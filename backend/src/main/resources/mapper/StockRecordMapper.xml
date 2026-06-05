@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bike.mapper.StockRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.bike.entity.StockRecord">
+        <id column="id" property="id"/>
+        <result column="part_id" property="partId"/>
+        <result column="part_name" property="partName"/>
+        <result column="type" property="type"/>
+        <result column="quantity" property="quantity"/>
+        <result column="operator" property="operator"/>
+        <result column="operate_time" property="operateTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectByPartId" resultMap="BaseResultMap">
+        SELECT r.*, p.part_name
+        FROM stock_record r
+        LEFT JOIN spare_part p ON r.part_id = p.id
+        WHERE r.part_id = #{partId}
+        ORDER BY r.operate_time DESC
+    </select>
+</mapper>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bike.mapper.SparePartMapper">
+
+    <resultMap id="BaseResultMap" type="com.bike.entity.SparePart">
+        <id column="id" property="id"/>
+        <result column="part_code" property="partCode"/>
+        <result column="part_name" property="partName"/>
+        <result column="category" property="category"/>
+        <result column="unit" property="unit"/>
+        <result column="stock_quantity" property="stockQuantity"/>
+        <result column="warning_threshold" property="warningThreshold"/>
+        <result column="unit_price" property="unitPrice"/>
+        <result column="supplier" property="supplier"/>
+        <result column="supply_point_id" property="supplyPointId"/>
+        <result column="supply_point_name" property="supplyPointName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="selectWithSupplyPoint">
+        SELECT sp.*, s.name as supply_point_name
+        FROM spare_part sp
+        LEFT JOIN supply_point s ON sp.supply_point_id = s.id
+    </sql>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        <include refid="selectWithSupplyPoint"/>
+        <where>
+            <if test="params.partName != null and params.partName != ''">
+                AND sp.part_name LIKE '%' || #{params.partName} || '%'
+            </if>
+            <if test="params.category != null and params.category != ''">
+                AND sp.category = #{params.category}
+            </if>
+            <if test="params.supplyPointId != null">
+                AND sp.supply_point_id = #{params.supplyPointId}
+            </if>
+            <if test="params.lowStock != null and params.lowStock == true">
+                AND sp.stock_quantity &lt;= sp.warning_threshold
+            </if>
+        </where>
+        ORDER BY sp.create_time DESC
+    </select>
+
+    <select id="selectLowStockList" resultMap="BaseResultMap">
+        <include refid="selectWithSupplyPoint"/>
+        WHERE sp.stock_quantity &lt;= sp.warning_threshold
+        ORDER BY sp.stock_quantity ASC
+        LIMIT 10
+    </select>
+
+    <select id="selectBySupplyPointId" resultMap="BaseResultMap">
+        <include refid="selectWithSupplyPoint"/>
+        WHERE sp.supply_point_id = #{supplyPointId}
+        ORDER BY sp.create_time DESC
+    </select>
+</mapper>

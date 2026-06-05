@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bike.mapper.RepairShopMapper">
+
+    <resultMap id="BaseResultMap" type="com.bike.entity.RepairShop">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="address" property="address"/>
+        <result column="level" property="level"/>
+        <result column="area" property="area"/>
+        <result column="service_scope" property="serviceScope"/>
+        <result column="contact_person" property="contactPerson"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="staff_count" property="staffCount"/>
+        <result column="business_hours" property="businessHours"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT * FROM repair_shop
+        <where>
+            <if test="params.name != null and params.name != ''">
+                AND name LIKE '%' || #{params.name} || '%'
+            </if>
+            <if test="params.area != null and params.area != ''">
+                AND area = #{params.area}
+            </if>
+            <if test="params.level != null and params.level != ''">
+                AND level = #{params.level}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+</mapper>

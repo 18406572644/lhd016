@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bike-backend
+    ports:
+      - "6016:6016"
+    environment:
+      - TZ=Asia/Shanghai
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    restart: unless-stopped
+    networks:
+      - bike-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6016/api/dashboard/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bike-frontend
+    ports:
+      - "2016:2016"
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - bike-network
+
+networks:
+  bike-network:
+    driver: bridge

@@ -1,0 +1,110 @@
+-- 补给点表
+CREATE TABLE IF NOT EXISTS supply_point (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT '正常',
+    area VARCHAR(100),
+    contact_person VARCHAR(50),
+    contact_phone VARCHAR(20),
+    longitude DECIMAL(10,6),
+    latitude DECIMAL(10,6),
+    description TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 维修点表
+CREATE TABLE IF NOT EXISTS repair_shop (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    level VARCHAR(50) NOT NULL,
+    area VARCHAR(100),
+    service_scope TEXT,
+    contact_person VARCHAR(50),
+    contact_phone VARCHAR(20),
+    staff_count INT DEFAULT 0,
+    business_hours VARCHAR(100),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 配件库存表
+CREATE TABLE IF NOT EXISTS spare_part (
+    id BIGSERIAL PRIMARY KEY,
+    part_code VARCHAR(50) UNIQUE NOT NULL,
+    part_name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    unit VARCHAR(20),
+    stock_quantity INT DEFAULT 0,
+    warning_threshold INT DEFAULT 10,
+    unit_price DECIMAL(10,2),
+    supplier VARCHAR(100),
+    supply_point_id BIGINT REFERENCES supply_point(id),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 库存变动记录表
+CREATE TABLE IF NOT EXISTS stock_record (
+    id BIGSERIAL PRIMARY KEY,
+    part_id BIGINT NOT NULL REFERENCES spare_part(id),
+    type VARCHAR(20) NOT NULL,
+    quantity INT NOT NULL,
+    operator VARCHAR(50),
+    operate_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    remark TEXT
+);
+
+-- 求助登记表
+CREATE TABLE IF NOT EXISTS help_request (
+    id BIGSERIAL PRIMARY KEY,
+    requester_name VARCHAR(50) NOT NULL,
+    requester_phone VARCHAR(20) NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    help_type VARCHAR(50) NOT NULL,
+    urgency VARCHAR(20) NOT NULL DEFAULT '中',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    description TEXT,
+    handler VARCHAR(50),
+    handle_result TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    handle_time TIMESTAMP
+);
+
+-- 物资盘点表
+CREATE TABLE IF NOT EXISTS inventory_check (
+    id BIGSERIAL PRIMARY KEY,
+    check_no VARCHAR(50) UNIQUE NOT NULL,
+    supply_point_id BIGINT REFERENCES supply_point(id),
+    supply_point_name VARCHAR(100),
+    check_date DATE NOT NULL,
+    checker VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    total_items INT DEFAULT 0,
+    diff_count INT DEFAULT 0,
+    remark TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 盘点明细表
+CREATE TABLE IF NOT EXISTS check_detail (
+    id BIGSERIAL PRIMARY KEY,
+    check_id BIGINT NOT NULL REFERENCES inventory_check(id),
+    part_id BIGINT REFERENCES spare_part(id),
+    part_name VARCHAR(100),
+    system_quantity INT DEFAULT 0,
+    actual_quantity INT DEFAULT 0,
+    diff_quantity INT DEFAULT 0
+);
+
+-- 索引
+CREATE INDEX IF NOT EXISTS idx_spare_part_stock ON spare_part(stock_quantity, warning_threshold);
+CREATE INDEX IF NOT EXISTS idx_help_request_status ON help_request(status);
+CREATE INDEX IF NOT EXISTS idx_help_request_urgency ON help_request(urgency);
+CREATE INDEX IF NOT EXISTS idx_stock_record_part ON stock_record(part_id);
+CREATE INDEX IF NOT EXISTS idx_check_detail_check ON check_detail(check_id);
+CREATE INDEX IF NOT EXISTS idx_supply_point_area ON supply_point(area);
+CREATE INDEX IF NOT EXISTS idx_repair_shop_area ON repair_shop(area);

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bike.mapper.HelpRequestMapper">
+
+    <resultMap id="BaseResultMap" type="com.bike.entity.HelpRequest">
+        <id column="id" property="id"/>
+        <result column="requester_name" property="requesterName"/>
+        <result column="requester_phone" property="requesterPhone"/>
+        <result column="location" property="location"/>
+        <result column="help_type" property="helpType"/>
+        <result column="urgency" property="urgency"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="handler" property="handler"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="create_time" property="createTime"/>
+        <result column="handle_time" property="handleTime"/>
+    </resultMap>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT * FROM help_request
+        <where>
+            <if test="params.requesterName != null and params.requesterName != ''">
+                AND requester_name LIKE '%' || #{params.requesterName} || '%'
+            </if>
+            <if test="params.helpType != null and params.helpType != ''">
+                AND help_type = #{params.helpType}
+            </if>
+            <if test="params.urgency != null and params.urgency != ''">
+                AND urgency = #{params.urgency}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND status = #{params.status}
+            </if>
+        </where>
+        ORDER BY
+            CASE urgency
+                WHEN '紧急' THEN 1
+                WHEN '高' THEN 2
+                WHEN '中' THEN 3
+                WHEN '低' THEN 4
+            END ASC,
+            create_time DESC
+    </select>
+
+    <select id="selectPendingList" resultMap="BaseResultMap">
+        SELECT * FROM help_request
+        WHERE status IN ('pending', 'processing')
+        ORDER BY
+            CASE urgency
+                WHEN '紧急' THEN 1
+                WHEN '高' THEN 2
+                WHEN '中' THEN 3
+                WHEN '低' THEN 4
+            END ASC,
+            create_time DESC
+        LIMIT 10
+    </select>
+</mapper>

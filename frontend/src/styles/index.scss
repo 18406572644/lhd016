@@ -1,0 +1,241 @@
+@import './variables.scss';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  color: $text-primary;
+  background: $content-bg;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.pulse-animation {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.el-button--primary {
+  background: $primary-color;
+  border-color: $primary-color;
+
+  &:hover {
+    background: $primary-light;
+    border-color: $primary-light;
+  }
+
+  &:active {
+    background: $primary-dark;
+    border-color: $primary-dark;
+  }
+}
+
+.el-button--success {
+  background: $success-dark;
+  border-color: $success-dark;
+}
+
+.el-button--warning {
+  background: $warning-color;
+  border-color: $warning-color;
+}
+
+.el-button--danger {
+  background: $danger-color;
+  border-color: $danger-color;
+}
+
+.el-tag--primary {
+  background: rgba(76, 175, 144, 0.15);
+  border-color: $primary-color;
+  color: $primary-dark;
+}
+
+.el-tag--success {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: $success-dark;
+  color: $success-dark;
+}
+
+.el-tag--warning {
+  background: rgba(255, 152, 0, 0.15);
+  border-color: $warning-color;
+  color: #E65100;
+}
+
+.el-tag--danger {
+  background: rgba(244, 67, 54, 0.15);
+  border-color: $danger-color;
+  color: $danger-color;
+}
+
+.el-tag--info {
+  background: rgba(33, 150, 243, 0.15);
+  border-color: $info-color;
+  color: $info-color;
+}
+
+.el-table {
+  border-radius: $border-radius;
+  overflow: hidden;
+  box-shadow: $card-shadow;
+
+  th {
+    background: linear-gradient(180deg, #E8F5F2 0%, #D1EEE5 100%) !important;
+    color: $text-primary !important;
+    font-weight: 600;
+  }
+
+  tr.warning-row {
+    background: $warning-row-bg;
+  }
+
+  tr.danger-row {
+    background: $danger-row-bg;
+  }
+
+  &--striped .el-table__body tr.current-row > td,
+  .el-table__body tr.current-row > td {
+    background: rgba(76, 175, 144, 0.1) !important;
+  }
+}
+
+.el-card {
+  border-radius: $border-radius-lg;
+  border: none;
+  box-shadow: $card-shadow;
+  transition: $transition-base;
+
+  &:hover {
+    box-shadow: $card-hover-shadow;
+    transform: translateY(-2px);
+  }
+}
+
+.el-dialog {
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+
+  .el-dialog__header {
+    background: $bg-gradient;
+    margin-right: 0;
+    padding: 20px 24px;
+  }
+
+  .el-dialog__title {
+    color: $primary-dark;
+    font-weight: 600;
+  }
+}
+
+.el-input__inner:focus,
+.el-textarea__inner:focus {
+  border-color: $primary-color;
+}
+
+.el-select-dropdown__item.selected {
+  color: $primary-color;
+  font-weight: 600;
+}
+
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background-color: $primary-color;
+}
+
+.el-menu {
+  border-right: none;
+
+  .el-menu-item {
+    transition: $transition-base;
+
+    &:hover {
+      background: rgba(76, 175, 144, 0.08);
+      color: $primary-color;
+    }
+
+    &.is-active {
+      background: linear-gradient(90deg, rgba(76, 175, 144, 0.15) 0%, transparent 100%);
+      color: $primary-color;
+      border-right: 3px solid $primary-color;
+    }
+  }
+
+  .el-submenu__title:hover {
+    background: rgba(76, 175, 144, 0.08);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $primary-light;
+  border-radius: 4px;
+
+  &:hover {
+    background: $primary-color;
+  }
+}

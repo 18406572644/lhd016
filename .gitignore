@@ -1,0 +1,96 @@
+### Java / Maven ###
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+target/
+build/
+out/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+### Node.js / Vue.js ###
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+.nuxt/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+coverage/
+*.tsbuildinfo
+
+### IDE & Editor ###
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.springsource/
+.factorypath
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+### OS ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+### Logs ###
+logs/
+*.log
+*.log.*
+!*.gitkeep
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+### Database ###
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+data/
+backup/
+
+### Env & Config ###
+.env
+.env.local
+.env.*.local
+*.local.properties
+application-local.yml
+application-local.properties
+
+### Other ###
+*.pid
+*.seed
+*.pid.lock
+*.orig
+*.rej
+*.bak
+*.tmp
+*.temp
+.attach_pid*

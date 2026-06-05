@@ -1,0 +1,23 @@
+#!/bin/bash
+echo "========================================"
+echo " 城市单车骑行补给站点台账系统 - Docker 一键启动"
+echo "========================================"
+echo ""
+echo "[1/3] 停止并清理旧容器..."
+docker-compose down
+echo ""
+echo "[2/3] 构建并启动服务..."
+docker-compose up -d --build
+echo ""
+echo "[3/3] 等待服务启动完成..."
+echo ""
+echo "服务启动中，请稍候..."
+echo ""
+echo "前端地址: http://localhost:2016"
+echo "后端地址: http://localhost:6016"
+echo "API文档: http://localhost:6016/doc.html"
+echo ""
+echo "查看日志: docker-compose logs -f"
+echo "停止服务: docker-compose down"
+echo ""
+echo "========================================"

@@ -1,0 +1,32 @@
+{
+  "name": "bike-station-frontend",
+  "version": "1.0.0",
+  "description": "城市单车骑行补给站点台账系统",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "vue": "^2.7.14",
+    "vue-router": "^3.6.5",
+    "vuex": "^3.6.2",
+    "element-ui": "^2.15.13",
+    "axios": "^1.4.0",
+    "echarts": "^5.4.2",
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "@vue/cli-service": "^5.0.8",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "vue-template-compiler": "^2.7.14",
+    "sass": "^1.62.1",
+    "sass-loader": "^13.2.2"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
