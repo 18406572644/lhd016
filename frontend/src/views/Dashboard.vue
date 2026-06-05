@@ -129,7 +129,7 @@
 </template>
 
 <script>
-import { getDashboardStats } from '@/api/dashboard'
+import { getDashboardStats, getCategoryStats, getHelpTrendStats } from '@/api/dashboard'
 import { formatDate } from '@/utils'
 
 export default {
@@ -145,6 +145,8 @@ export default {
       },
       stockWarningList: [],
       pendingHelpList: [],
+      categoryStats: [],
+      helpTrendStats: [],
       categoryChart: null,
       trendChart: null,
       quickEntries: [
@@ -171,30 +173,32 @@ export default {
     this.loadData()
   },
   methods: {
-    loadData() {
-      this.loadMockData()
-      this.$nextTick(() => {
-        this.initCategoryChart()
-        this.initTrendChart()
-      })
-    },
-    loadMockData() {
-      this.stats = {
-        supplyPointCount: 12,
-        repairShopCount: 6,
-        lowStockCount: 3,
-        pendingHelpCount: 2,
-        todayCheckCount: 3
+    async loadData() {
+      try {
+        const [statsRes, categoryRes, trendRes] = await Promise.all([
+          getDashboardStats(),
+          getCategoryStats(),
+          getHelpTrendStats()
+        ])
+        const statsData = statsRes.data
+        this.stats = {
+          supplyPointCount: statsData.supplyPointCount,
+          repairShopCount: statsData.repairShopCount,
+          lowStockCount: statsData.lowStockCount,
+          pendingHelpCount: statsData.pendingHelpCount,
+          todayCheckCount: statsData.todayCheckCount
+        }
+        this.stockWarningList = statsData.stockWarningList || []
+        this.pendingHelpList = statsData.pendingHelpList || []
+        this.categoryStats = categoryRes.data || []
+        this.helpTrendStats = trendRes.data || []
+        this.$nextTick(() => {
+          this.initCategoryChart()
+          this.initTrendChart()
+        })
+      } catch (error) {
+        this.$message.error('加载仪表盘数据失败')
       }
-      this.stockWarningList = [
-        { id: 1, partName: '内胎', stockQuantity: 5, unit: '条', warningThreshold: 10 },
-        { id: 2, partName: '刹车线', stockQuantity: 8, unit: '根', warningThreshold: 15 },
-        { id: 3, partName: '链条', stockQuantity: 3, unit: '条', warningThreshold: 5 }
-      ]
-      this.pendingHelpList = [
-        { id: 1, requesterName: '小明', helpType: '车辆故障', urgency: '高', location: '滨江区江南大道附近', description: '自行车链条断裂，无法继续骑行' },
-        { id: 2, requesterName: '小红', helpType: '身体不适', urgency: '中', location: '西湖景区苏堤', description: '骑行中感觉头晕，需要休息和饮水' }
-      ]
     },
     initCategoryChart() {
       const chartDom = this.$refs.categoryChart
@@ -202,7 +206,7 @@ export default {
       const option = {
         tooltip: { trigger: 'item' },
         legend: { orient: 'vertical', left: 'left', top: 'center' },
-        color: ['#4CAF90', '#87CEEB', '#FF9800', '#9C27B0'],
+        color: ['#4CAF90', '#87CEEB', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4', '#FFEB3B'],
         series: [
           {
             name: '库存分类',
@@ -215,12 +219,7 @@ export default {
             emphasis: {
               label: { show: true, fontSize: 16, fontWeight: 'bold' }
             },
-            data: [
-              { value: 35, name: '轮胎类' },
-              { value: 28, name: '制动系统' },
-              { value: 21, name: '传动系统' },
-              { value: 215, name: '补给品' }
-            ]
+            data: this.categoryStats
           }
         ]
       }
@@ -229,12 +228,9 @@ export default {
     initTrendChart() {
       const chartDom = this.$refs.trendChart
       this.trendChart = this.$echarts.init(chartDom)
-      const days = []
-      const now = new Date()
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 24 * 3600 * 1000)
-        days.push(`${d.getMonth() + 1}/${d.getDate()}`)
-      }
+      const days = this.helpTrendStats.map(item => item.date)
+      const totalData = this.helpTrendStats.map(item => item.totalCount)
+      const handledData = this.helpTrendStats.map(item => item.handledCount)
       const option = {
         tooltip: { trigger: 'axis' },
         grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
@@ -252,14 +248,14 @@ export default {
             type: 'line',
             smooth: true,
             areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(76,175,144,0.4)' }, { offset: 1, color: 'rgba(76,175,144,0.05)' }] } },
-            data: [5, 8, 3, 6, 9, 4, 7]
+            data: totalData
           },
           {
             name: '已处理',
             type: 'line',
             smooth: true,
             areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(255,152,0,0.4)' }, { offset: 1, color: 'rgba(255,152,0,0.05)' }] } },
-            data: [4, 7, 3, 5, 8, 4, 5]
+            data: handledData
           }
         ]
       }

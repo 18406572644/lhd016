@@ -6,3 +6,17 @@ export function getDashboardStats() {
     method: 'get'
   })
 }
+
+export function getCategoryStats() {
+  return request({
+    url: '/dashboard/category-stats',
+    method: 'get'
+  })
+}
+
+export function getHelpTrendStats() {
+  return request({
+    url: '/dashboard/help-trend',
+    method: 'get'
+  })
+}

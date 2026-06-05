@@ -55,4 +55,11 @@
         WHERE sp.supply_point_id = #{supplyPointId}
         ORDER BY sp.create_time DESC
     </select>
+
+    <select id="selectCategoryStats" resultType="com.bike.entity.dto.CategoryStatsVO">
+        SELECT category AS name, SUM(stock_quantity) AS value
+        FROM spare_part
+        GROUP BY category
+        ORDER BY value DESC
+    </select>
 </mapper>

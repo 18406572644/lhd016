@@ -138,4 +138,15 @@
         LEFT JOIN repair_shop r ON h.repair_shop_id = r.id
         WHERE h.id = #{id}
     </select>
-</mapper>
+
+    <select id="selectHelpTrendStats" resultType="com.bike.entity.dto.HelpTrendStatsVO">
+        SELECT
+            FORMATDATETIME(h.create_time, 'MM/dd') AS date,
+            COUNT(h.id) AS totalCount,
+            SUM(CASE WHEN h.status = 'completed' THEN 1 ELSE 0 END) AS handledCount
+        FROM help_request h
+        WHERE h.create_time >= #{startDate} AND h.create_time &lt;= #{endDate}
+        GROUP BY FORMATDATETIME(h.create_time, 'MM/dd'), CAST(h.create_time AS DATE)
+        ORDER BY CAST(h.create_time AS DATE) ASC
+    </select>
+</mapper></function></seed:tool_call>
