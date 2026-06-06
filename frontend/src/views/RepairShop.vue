@@ -123,6 +123,24 @@
         <el-form-item label="维修人员数量" prop="staffCount">
           <el-input-number v-model="form.staffCount" :min="0" :max="50" style="width: 100%;"></el-input-number>
         </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="经度">
+              <el-input v-model="form.longitude" placeholder="请输入经度"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="纬度">
+              <el-input v-model="form.latitude" placeholder="请输入纬度"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-location" @click="openMapPicker">
+            <i class="el-icon-location"></i> 地图选点
+          </el-button>
+          <span class="map-tips">点击地图自动填充经纬度和地址</span>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
@@ -139,6 +157,7 @@
         <el-descriptions-item label="所属区域">{{ currentRow.area }}</el-descriptions-item>
         <el-descriptions-item label="营业时间">{{ currentRow.businessHours }}</el-descriptions-item>
         <el-descriptions-item label="详细地址" :span="2">{{ currentRow.address }}</el-descriptions-item>
+        <el-descriptions-item label="经纬度" :span="2">{{ currentRow.longitude }}, {{ currentRow.latitude }}</el-descriptions-item>
         <el-descriptions-item label="服务范围" :span="2">{{ currentRow.serviceScope }}</el-descriptions-item>
         <el-descriptions-item label="联系人">{{ currentRow.contactPerson }}</el-descriptions-item>
         <el-descriptions-item label="联系电话">{{ currentRow.contactPhone }}</el-descriptions-item>
@@ -146,20 +165,34 @@
         <el-descriptions-item label="创建时间">{{ formatDate(currentRow.createTime) }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <MapPicker
+      v-model="mapPickerVisible"
+      :initialLongitude="form.longitude"
+      :initialLatitude="form.latitude"
+      :initialAddress="form.address"
+      @confirm="onMapPickerConfirm"
+    ></MapPicker>
   </div>
 </template>
 
 <script>
 import { formatDate, getLevelType } from '@/utils'
+import { getRepairShopList, getRepairShop, createRepairShop, updateRepairShop, deleteRepairShop } from '@/api/repairShop'
+import MapPicker from '@/components/MapPicker.vue'
 
 export default {
   name: 'RepairShop',
+  components: {
+    MapPicker
+  },
   data() {
     return {
       loading: false,
       submitLoading: false,
       dialogVisible: false,
       detailVisible: false,
+      mapPickerVisible: false,
       dialogType: 'add',
       currentRow: {},
       searchForm: {
@@ -178,6 +211,8 @@ export default {
         id: null,
         name: '',
         address: '',
+        longitude: '',
+        latitude: '',
         level: '',
         area: '',
         serviceScope: '',
@@ -208,13 +243,24 @@ export default {
   methods: {
     formatDate,
     getLevelType,
+    openMapPicker() {
+      this.mapPickerVisible = true
+    },
+    onMapPickerConfirm(location) {
+      this.form.longitude = location.longitude
+      this.form.latitude = location.latitude
+      if (location.address && !this.form.address) {
+        this.form.address = location.address
+      }
+      this.$message.success('已选择位置')
+    },
     loadData() {
       this.loading = true
       this.tableData = [
-        { id: 1, name: '西湖一级维修中心', address: '西湖区体育场路150号', level: '一级', area: '西湖区', serviceScope: '整车维修、配件更换、保养服务', contactPerson: '刘师傅', contactPhone: '13900139001', staffCount: 8, businessHours: '08:00-20:00', createTime: '2024-01-15 10:30:00' },
-        { id: 2, name: '滨江二级维修站', address: '滨江区江南大道100号', level: '二级', area: '滨江区', serviceScope: '普通维修、充气、补胎', contactPerson: '陈师傅', contactPhone: '13900139002', staffCount: 4, businessHours: '09:00-18:00', createTime: '2024-01-16 09:20:00' },
-        { id: 3, name: '余杭三级维修点', address: '余杭区余杭塘路200号', level: '三级', area: '余杭区', serviceScope: '简单维修、应急处理', contactPerson: '周师傅', contactPhone: '13900139003', staffCount: 2, businessHours: '10:00-17:00', createTime: '2024-01-17 14:45:00' },
-        { id: 4, name: '上城二级维修站', address: '上城区庆春路88号', level: '二级', area: '上城区', serviceScope: '普通维修、配件更换', contactPerson: '吴师傅', contactPhone: '13900139004', staffCount: 5, businessHours: '08:30-19:00', createTime: '2024-01-18 11:00:00' }
+        { id: 1, name: '西湖一级维修中心', address: '西湖区体育场路150号', longitude: 120.1650, latitude: 30.2750, level: '一级', area: '西湖区', serviceScope: '整车维修、配件更换、保养服务', contactPerson: '刘师傅', contactPhone: '13900139001', staffCount: 8, businessHours: '08:00-20:00', createTime: '2024-01-15 10:30:00' },
+        { id: 2, name: '滨江二级维修站', address: '滨江区江南大道100号', longitude: 120.2100, latitude: 30.2050, level: '二级', area: '滨江区', serviceScope: '普通维修、充气、补胎', contactPerson: '陈师傅', contactPhone: '13900139002', staffCount: 4, businessHours: '09:00-18:00', createTime: '2024-01-16 09:20:00' },
+        { id: 3, name: '余杭三级维修点', address: '余杭区余杭塘路200号', longitude: 120.0500, latitude: 30.2900, level: '三级', area: '余杭区', serviceScope: '简单维修、应急处理', contactPerson: '周师傅', contactPhone: '13900139003', staffCount: 2, businessHours: '10:00-17:00', createTime: '2024-01-17 14:45:00' },
+        { id: 4, name: '上城二级维修站', address: '上城区庆春路88号', longitude: 120.1700, latitude: 30.2600, level: '二级', area: '上城区', serviceScope: '普通维修、配件更换', contactPerson: '吴师傅', contactPhone: '13900139004', staffCount: 5, businessHours: '08:30-19:00', createTime: '2024-01-18 11:00:00' }
       ]
       this.pageInfo.total = this.tableData.length
       this.loading = false
@@ -242,6 +288,8 @@ export default {
         id: null,
         name: '',
         address: '',
+        longitude: '',
+        latitude: '',
         level: '',
         area: '',
         serviceScope: '',
@@ -336,6 +384,12 @@ export default {
 
   .danger-btn {
     color: $danger-color;
+  }
+
+  .map-tips {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #909399;
   }
 }
 </style>

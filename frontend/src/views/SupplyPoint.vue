@@ -147,15 +147,25 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="经度">
-              <el-input v-model="form.longitude" placeholder="请输入经度"></el-input>
+              <div class="location-input-group">
+                <el-input v-model="form.longitude" placeholder="请输入经度"></el-input>
+              </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="纬度">
-              <el-input v-model="form.latitude" placeholder="请输入纬度"></el-input>
+              <div class="location-input-group">
+                <el-input v-model="form.latitude" placeholder="请输入纬度"></el-input>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-location" @click="openMapPicker">
+            <i class="el-icon-location"></i> 地图选点
+          </el-button>
+          <span class="map-tips">点击地图自动填充经纬度和地址</span>
+        </el-form-item>
         <el-form-item label="描述说明">
           <el-input type="textarea" v-model="form.description" :rows="3" placeholder="请输入描述说明"></el-input>
         </el-form-item>
@@ -185,21 +195,34 @@
         <el-descriptions-item label="描述说明" :span="2">{{ currentRow.description || '暂无' }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <MapPicker
+      v-model="mapPickerVisible"
+      :initialLongitude="form.longitude"
+      :initialLatitude="form.latitude"
+      :initialAddress="form.address"
+      @confirm="onMapPickerConfirm"
+    ></MapPicker>
   </div>
 </template>
 
 <script>
 import { getSupplyPointList, getSupplyPoint, createSupplyPoint, updateSupplyPoint, deleteSupplyPoint } from '@/api/supplyPoint'
 import { formatDate, getStatusType } from '@/utils'
+import MapPicker from '@/components/MapPicker.vue'
 
 export default {
   name: 'SupplyPoint',
+  components: {
+    MapPicker
+  },
   data() {
     return {
       loading: false,
       submitLoading: false,
       dialogVisible: false,
       detailVisible: false,
+      mapPickerVisible: false,
       dialogType: 'add',
       currentRow: {},
       searchForm: {
@@ -252,6 +275,17 @@ export default {
   methods: {
     formatDate,
     getStatusType,
+    openMapPicker() {
+      this.mapPickerVisible = true
+    },
+    onMapPickerConfirm(location) {
+      this.form.longitude = location.longitude
+      this.form.latitude = location.latitude
+      if (location.address && !this.form.address) {
+        this.form.address = location.address
+      }
+      this.$message.success('已选择位置')
+    },
     getTypeTag(type) {
       const map = {
         '饮水点': 'info',
@@ -409,6 +443,18 @@ export default {
 
   .danger-btn {
     color: $danger-color;
+  }
+
+  .location-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .map-tips {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #909399;
   }
 
   ::v-deep .el-descriptions {

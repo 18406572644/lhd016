@@ -25,6 +25,18 @@ const routes = [
     ]
   },
   {
+    path: '/map',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'MapOverview',
+        component: () => import('@/views/MapOverview.vue'),
+        meta: { title: '地图总览', icon: 'el-icon-map-location' }
+      }
+    ]
+  },
+  {
     path: '/supply',
     component: Layout,
     children: [

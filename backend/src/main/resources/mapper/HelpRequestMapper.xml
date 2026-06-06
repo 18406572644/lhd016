@@ -149,4 +149,4 @@
         GROUP BY FORMATDATETIME(h.create_time, 'MM/dd'), CAST(h.create_time AS DATE)
         ORDER BY CAST(h.create_time AS DATE) ASC
     </select>
-</mapper></function></seed:tool_call>
+</mapper>
