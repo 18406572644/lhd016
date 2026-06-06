@@ -48,4 +48,32 @@
         FROM inventory_check
         WHERE check_no LIKE CONCAT('PD', FORMATDATETIME(CURRENT_DATE, 'yyyyMMdd'), '%')
     </select>
+
+    <select id="selectRecentCheckStats" resultType="java.util.Map">
+        SELECT
+            COALESCE(SUM(ic.total_items), 0) AS totalItems,
+            COALESCE(SUM(ic.diff_count), 0) AS diffItems,
+            COUNT(*) AS checkCount
+        FROM inventory_check ic
+        WHERE ic.check_date >= #{startDate}
+          AND ic.status = 'completed'
+    </select>
+
+    <select id="countRecentCompletedChecks" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM inventory_check
+        WHERE check_date >= #{startDate}
+          AND status = 'completed'
+    </select>
+
+    <select id="selectTotalDiffItems" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(diff_count), 0) FROM inventory_check
+        WHERE check_date >= #{startDate}
+          AND status = 'completed'
+    </select>
+
+    <select id="selectTotalCheckedItems" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(total_items), 0) FROM inventory_check
+        WHERE check_date >= #{startDate}
+          AND status = 'completed'
+    </select>
 </mapper>

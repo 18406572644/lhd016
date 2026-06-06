@@ -20,4 +20,80 @@
         WHERE r.part_id = #{partId}
         ORDER BY r.operate_time DESC
     </select>
+
+    <select id="selectTurnoverRateByCategory" resultType="com.bike.entity.dto.TurnoverRateVO">
+        SELECT
+            p.category AS category,
+            NULL AS supplyPointName,
+            COALESCE(SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END), 0) AS outgoingQuantity,
+            COALESCE(AVG(p.stock_quantity), 0) AS averageStock,
+            #{period} AS period
+        FROM spare_part p
+        LEFT JOIN stock_record r ON p.id = r.part_id
+            AND r.operate_time >= #{startDate}
+            AND r.operate_time &lt; #{endDate}
+        WHERE p.category IS NOT NULL
+        <if test="supplyPointId != null">
+            AND p.supply_point_id = #{supplyPointId}
+        </if>
+        GROUP BY p.category
+        ORDER BY outgoingQuantity DESC
+    </select>
+
+    <select id="selectTurnoverRateBySupplyPoint" resultType="com.bike.entity.dto.TurnoverRateVO">
+        SELECT
+            NULL AS category,
+            s.name AS supplyPointName,
+            COALESCE(SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END), 0) AS outgoingQuantity,
+            COALESCE(AVG(p.stock_quantity), 0) AS averageStock,
+            #{period} AS period
+        FROM spare_part p
+        LEFT JOIN supply_point s ON p.supply_point_id = s.id
+        LEFT JOIN stock_record r ON p.id = r.part_id
+            AND r.operate_time >= #{startDate}
+            AND r.operate_time &lt; #{endDate}
+        <if test="category != null and category != ''">
+            WHERE p.category = #{category}
+        </if>
+        GROUP BY s.name
+        ORDER BY outgoingQuantity DESC
+    </select>
+
+    <select id="selectStockInOutTrend" resultType="com.bike.entity.dto.StockInOutTrendVO">
+        SELECT
+            TO_CHAR(r.operate_time, 'YYYY-MM') AS month,
+            p.category AS category,
+            COALESCE(SUM(CASE WHEN r.type = 'in' THEN r.quantity ELSE 0 END), 0) AS stockInQuantity,
+            COALESCE(SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END), 0) AS stockOutQuantity,
+            COALESCE(
+                SUM(CASE WHEN r.type = 'in' THEN r.quantity ELSE 0 END) -
+                SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END),
+                0
+            ) AS netChange
+        FROM stock_record r
+        LEFT JOIN spare_part p ON r.part_id = p.id
+        WHERE r.operate_time >= #{startDate}
+          AND r.operate_time &lt; #{endDate}
+        <if test="category != null and category != ''">
+            AND p.category = #{category}
+        </if>
+        <if test="supplyPointId != null">
+            AND p.supply_point_id = #{supplyPointId}
+        </if>
+        GROUP BY TO_CHAR(r.operate_time, 'YYYY-MM'), p.category
+        ORDER BY month DESC
+    </select>
+
+    <select id="selectAvgTurnoverRate" resultType="java.math.BigDecimal">
+        SELECT COALESCE(
+            SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END) * 1.0 /
+            NULLIF(AVG(p.stock_quantity), 0),
+            0
+        )
+        FROM spare_part p
+        LEFT JOIN stock_record r ON p.id = r.part_id
+            AND r.operate_time >= #{startDate}
+            AND r.operate_time &lt; #{endDate}
+        WHERE p.stock_quantity > 0
+    </select>
 </mapper>

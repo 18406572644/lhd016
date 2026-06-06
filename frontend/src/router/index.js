@@ -107,6 +107,18 @@ const routes = [
         meta: { title: '操作日志', icon: 'el-icon-document-copy' }
       }
     ]
+  },
+  {
+    path: '/inventory-analysis',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'InventoryAnalysis',
+        component: () => import('@/views/InventoryAnalysis.vue'),
+        meta: { title: '库存智能分析', icon: 'el-icon-data-analysis' }
+      }
+    ]
   }
 ]
 
