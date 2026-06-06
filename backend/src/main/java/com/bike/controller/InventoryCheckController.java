@@ -1,5 +1,6 @@
 package com.bike.controller;
 
+import com.bike.common.OperationLog;
 import com.bike.common.PageQuery;
 import com.bike.common.Result;
 import com.bike.entity.InventoryCheck;
@@ -50,6 +51,7 @@ public class InventoryCheckController {
     }
 
     @ApiOperation("创建盘点单")
+    @OperationLog(module = "物资盘点", operationType = "新增")
     @PostMapping
     public Result<Void> create(@RequestBody InventoryCheck check) {
         inventoryCheckService.createCheck(check);
@@ -57,6 +59,7 @@ public class InventoryCheckController {
     }
 
     @ApiOperation("完成盘点")
+    @OperationLog(module = "物资盘点", operationType = "盘点完成")
     @PostMapping("/{id}/complete")
     public Result<Void> complete(@PathVariable Long id, @RequestBody InventoryCheck check) {
         inventoryCheckService.completeCheck(id, check);
@@ -64,8 +67,9 @@ public class InventoryCheckController {
     }
 
     @ApiOperation("删除盘点单")
+    @OperationLog(module = "物资盘点", operationType = "删除", sensitive = true)
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable Long id, @RequestParam String reason) {
         inventoryCheckService.removeById(id);
         return Result.success();
     }

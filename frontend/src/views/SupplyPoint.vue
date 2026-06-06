@@ -209,6 +209,7 @@
 <script>
 import { getSupplyPointList, getSupplyPoint, createSupplyPoint, updateSupplyPoint, deleteSupplyPoint } from '@/api/supplyPoint'
 import { formatDate, getStatusType } from '@/utils'
+import { sensitiveConfirm } from '@/utils/sensitiveConfirm'
 import MapPicker from '@/components/MapPicker.vue'
 
 export default {
@@ -300,26 +301,26 @@ export default {
       if (row.status === '关闭') return 'danger-row'
       return ''
     },
-    loadData() {
+    async loadData() {
       this.loading = true
-      this.loadMockData()
-      this.loading = false
-    },
-    loadMockData() {
-      this.tableData = [
-        { id: 1, name: '滨江公园补给站', address: '滨江区滨江公园东门', type: '综合补给', status: '正常', area: '滨江区', contactPerson: '张三', contactPhone: '13800138001', longitude: 120.1551, latitude: 30.2741, description: '滨江公园主入口补给站', createTime: '2024-01-15 10:30:00', updateTime: '2024-01-15 10:30:00' },
-        { id: 2, name: '西湖休息站', address: '西湖区北山街88号', type: '休息站', status: '正常', area: '西湖区', contactPerson: '李四', contactPhone: '13800138002', longitude: 120.1562, latitude: 30.2672, description: '西湖景区北山街休息站', createTime: '2024-01-16 09:20:00', updateTime: '2024-01-16 09:20:00' },
-        { id: 3, name: '科技园区充电站', address: '余杭区文一西路969号', type: '充电站', status: '正常', area: '余杭区', contactPerson: '王五', contactPhone: '13800138003', longitude: 120.0211, latitude: 30.2780, description: '阿里巴巴西溪园区充电站', createTime: '2024-01-17 14:45:00', updateTime: '2024-01-17 14:45:00' },
-        { id: 4, name: '运河饮水点', address: '拱墅区运河广场', type: '饮水点', status: '维护中', area: '拱墅区', contactPerson: '赵六', contactPhone: '13800138004', longitude: 120.1456, latitude: 30.3210, description: '运河广场饮水补给点', createTime: '2024-01-18 11:00:00', updateTime: '2024-01-18 11:00:00' },
-        { id: 5, name: '钱江新城综合站', address: '上城区钱江新城市民中心', type: '综合补给', status: '正常', area: '上城区', contactPerson: '钱七', contactPhone: '13800138005', longitude: 120.2100, latitude: 30.2450, description: '市民中心综合补给站', createTime: '2024-01-19 16:30:00', updateTime: '2024-01-19 16:30:00' },
-        { id: 6, name: '武林广场休息站', address: '下城区武林广场', type: '休息站', status: '关闭', area: '下城区', contactPerson: '孙八', contactPhone: '13800138006', longitude: 120.1650, latitude: 30.2850, description: '武林广场休息站（暂未开放）', createTime: '2024-01-20 08:15:00', updateTime: '2024-01-20 08:15:00' }
-      ]
-      this.pageInfo.total = this.tableData.length
+      try {
+        const params = {
+          pageNum: this.pageInfo.pageNum,
+          pageSize: this.pageInfo.pageSize,
+          ...this.searchForm
+        }
+        const data = await getSupplyPointList(params)
+        this.tableData = data.list || data
+        this.pageInfo.total = data.total || this.tableData.length
+      } catch (e) {
+        this.$message.error('加载数据失败')
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch() {
       this.pageInfo.pageNum = 1
       this.loadData()
-      this.$message.success('搜索完成')
     },
     handleReset() {
       this.searchForm = {
@@ -366,43 +367,51 @@ export default {
       this.form = { ...row }
       this.dialogVisible = true
     },
-    handleView(row) {
-      this.currentRow = { ...row }
-      this.detailVisible = true
+   async handleView(row) {
+      try {
+        const data = await getSupplyPoint(row.id)
+        this.currentRow = data
+        this.detailVisible = true
+      } catch (e) {
+        this.$message.error('获取详情失败')
+      }
     },
-    handleDelete(row) {
-      this.$confirm(`确定要删除补给点「${row.name}」吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.tableData = this.tableData.filter(item => item.id !== row.id)
+    async handleDelete(row) {
+      try {
+        const reason = await sensitiveConfirm({
+          title: '删除补给点',
+          message: `您正在删除补给点「${row.name}」，此操作不可恢复，请输入删除原因：`,
+          confirmButtonText: '确认删除',
+          type: 'danger'
+        })
+        await deleteSupplyPoint(row.id, reason)
         this.$message.success('删除成功')
-      }).catch(() => {})
+        this.loadData()
+      } catch (e) {
+        if (e.message !== 'cancel') {
+          this.$message.error('删除失败')
+        }
+      }
     },
     handleSubmit() {
-      this.$refs.formRef.validate(valid => {
+      this.$refs.formRef.validate(async valid => {
         if (valid) {
           this.submitLoading = true
-          setTimeout(() => {
+          try {
             if (this.dialogType === 'add') {
-              this.tableData.unshift({
-                ...this.form,
-                id: Date.now(),
-                createTime: new Date().toLocaleString(),
-                updateTime: new Date().toLocaleString()
-              })
+              await createSupplyPoint(this.form)
               this.$message.success('新增成功')
             } else {
-              const index = this.tableData.findIndex(item => item.id === this.form.id)
-              if (index > -1) {
-                this.tableData[index] = { ...this.form, updateTime: new Date().toLocaleString() }
-              }
+              await updateSupplyPoint(this.form.id, this.form)
               this.$message.success('更新成功')
             }
-            this.submitLoading = false
             this.dialogVisible = false
-          }, 500)
+            this.loadData()
+          } catch (e) {
+            this.$message.error('保存失败')
+          } finally {
+            this.submitLoading = false
+          }
         }
       })
     }

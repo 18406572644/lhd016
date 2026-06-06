@@ -15,6 +15,14 @@ export function getInventoryCheck(id) {
   })
 }
 
+export function deleteInventoryCheck(id, reason) {
+  return request({
+    url: `/inventory-checks/${id}`,
+    method: 'delete',
+    params: { reason }
+  })
+}
+
 export function createInventoryCheck(data) {
   return request({
     url: '/inventory-checks',
@@ -28,12 +36,5 @@ export function completeInventoryCheck(id, data) {
     url: `/inventory-checks/${id}/complete`,
     method: 'post',
     data
-  })
-}
-
-export function deleteInventoryCheck(id) {
-  return request({
-    url: `/inventory-checks/${id}`,
-    method: 'delete'
   })
 }

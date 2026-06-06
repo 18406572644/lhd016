@@ -7,6 +7,7 @@ public class StockInOutDTO implements Serializable {
     private Integer quantity;
     private String operator;
     private String remark;
+    private String reason;
 
     public Integer getQuantity() {
         return quantity;
@@ -30,5 +31,13 @@ public class StockInOutDTO implements Serializable {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }

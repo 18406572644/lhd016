@@ -104,7 +104,7 @@
           :page-sizes="[10, 20, 50]"
           :page-size="pageInfo.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredTableData.length"
+          :total="pageInfo.total"
           background
         ></el-pagination>
       </div>
@@ -209,6 +209,8 @@
 
 <script>
 import { formatDate, isLowStock as checkLowStock } from '@/utils'
+import { sensitiveConfirm } from '@/utils/sensitiveConfirm'
+import { getSparePartList, createSparePart, updateSparePart, stockIn, stockOut, deleteSparePart } from '@/api/sparePart'
 
 export default {
   name: 'Inventory',
@@ -321,23 +323,26 @@ export default {
       if (this.isLowStock(row)) return 'danger-row'
       return ''
     },
-    loadData() {
+    async loadData() {
       this.loading = true
-      this.tableData = [
-        { id: 1, partCode: 'P001', partName: '内胎', category: '轮胎类', unit: '条', stockQuantity: 5, warningThreshold: 10, unitPrice: 35.00, supplier: '永久配件', supplyPointId: 1, supplyPointName: '滨江公园补给站' },
-        { id: 2, partCode: 'P002', partName: '外胎', category: '轮胎类', unit: '条', stockQuantity: 12, warningThreshold: 8, unitPrice: 85.00, supplier: '永久配件', supplyPointId: 1, supplyPointName: '滨江公园补给站' },
-        { id: 3, partCode: 'P003', partName: '刹车皮', category: '制动系统', unit: '对', stockQuantity: 20, warningThreshold: 10, unitPrice: 25.00, supplier: '捷安特配件', supplyPointId: 1, supplyPointName: '滨江公园补给站' },
-        { id: 4, partCode: 'P004', partName: '刹车线', category: '制动系统', unit: '根', stockQuantity: 8, warningThreshold: 15, unitPrice: 15.00, supplier: '捷安特配件', supplyPointId: 2, supplyPointName: '西湖休息站' },
-        { id: 5, partCode: 'P005', partName: '链条', category: '传动系统', unit: '条', stockQuantity: 3, warningThreshold: 5, unitPrice: 65.00, supplier: '禧玛诺', supplyPointId: 1, supplyPointName: '滨江公园补给站' },
-        { id: 6, partCode: 'P006', partName: '脚踏', category: '传动系统', unit: '副', stockQuantity: 18, warningThreshold: 10, unitPrice: 45.00, supplier: '禧玛诺', supplyPointId: 2, supplyPointName: '西湖休息站' },
-        { id: 7, partCode: 'P007', partName: '矿泉水', category: '补给品', unit: '瓶', stockQuantity: 200, warningThreshold: 50, unitPrice: 2.00, supplier: '农夫山泉', supplyPointId: 1, supplyPointName: '滨江公园补给站' },
-        { id: 8, partCode: 'P008', partName: '能量棒', category: '补给品', unit: '个', stockQuantity: 15, warningThreshold: 30, unitPrice: 8.00, supplier: '康比特', supplyPointId: 1, supplyPointName: '滨江公园补给站' }
-      ]
-      this.loading = false
+      try {
+        const params = {
+          pageNum: this.pageInfo.pageNum,
+          pageSize: this.pageInfo.pageSize,
+          ...this.searchForm
+        }
+        const data = await getSparePartList(params)
+        this.tableData = data.list || data
+        this.pageInfo.total = data.total || this.tableData.length
+      } catch (e) {
+        this.$message.error('加载数据失败')
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch() {
       this.pageInfo.pageNum = 1
-      this.$message.success('搜索完成')
+      this.loadData()
     },
     handleReset() {
       this.searchForm = {
@@ -347,12 +352,16 @@ export default {
         stockStatus: ''
       }
       this.showWarningOnly = false
+      this.pageInfo.pageNum = 1
+      this.loadData()
     },
     handleSizeChange(val) {
       this.pageInfo.pageSize = val
+      this.loadData()
     },
     handleCurrentChange(val) {
       this.pageInfo.pageNum = val
+      this.loadData()
     },
     handleAdd() {
       this.dialogType = 'add'
@@ -379,15 +388,22 @@ export default {
       this.form = { ...row }
       this.dialogVisible = true
     },
-    handleDelete(row) {
-      this.$confirm(`确定要删除配件「${row.partName}」吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
+    async handleDelete(row) {
+      try {
+        const reason = await sensitiveConfirm({
+          title: '删除配件',
+          message: `您正在删除配件「${row.partName}」，此操作不可恢复，请输入删除原因：`,
+          confirmButtonText: '确认删除',
+          type: 'danger'
+        })
+        await deleteSparePart(row.id, reason)
         this.tableData = this.tableData.filter(item => item.id !== row.id)
         this.$message.success('删除成功')
-      }).catch(() => {})
+      } catch (e) {
+        if (e.message !== 'cancel') {
+          this.$message.error('删除失败')
+        }
+      }
     },
     handleStockIn(row) {
       this.stockType = 'in'
@@ -405,15 +421,33 @@ export default {
       this.stockForm = { quantity: 1, operator: '', remark: '' }
       this.stockDialogVisible = true
     },
-    handleStockSubmit() {
-      this.$refs.stockFormRef.validate(valid => {
+    async handleStockSubmit() {
+      this.$refs.stockFormRef.validate(async valid => {
         if (valid) {
           if (this.stockType === 'out' && this.stockForm.quantity > this.currentPart.stockQuantity) {
             this.$message.error('出库数量不能大于当前库存')
             return
           }
-          this.stockSubmitLoading = true
-          setTimeout(() => {
+          try {
+            const actionText = this.stockType === 'in' ? '入库' : '出库'
+            const reason = await sensitiveConfirm({
+              title: `${actionText}确认`,
+              message: `您正在对配件「${this.currentPart.partName}」执行${actionText}操作，数量：${this.stockForm.quantity} ${this.currentPart.unit}，请输入操作原因：`,
+              confirmButtonText: `确认${actionText}`,
+              type: 'warning'
+            })
+            this.stockSubmitLoading = true
+            const stockData = {
+              quantity: this.stockForm.quantity,
+              operator: this.stockForm.operator,
+              remark: this.stockForm.remark,
+              reason
+            }
+            if (this.stockType === 'in') {
+              await stockIn(this.currentPart.id, stockData)
+            } else {
+              await stockOut(this.currentPart.id, stockData)
+            }
             const index = this.tableData.findIndex(item => item.id === this.currentPart.id)
             if (index > -1) {
               if (this.stockType === 'in') {
@@ -422,39 +456,42 @@ export default {
                 this.tableData[index].stockQuantity -= this.stockForm.quantity
               }
             }
-            this.$message.success(this.stockType === 'in' ? '入库成功' : '出库成功')
+            this.$message.success(`${actionText}成功`)
             this.stockSubmitLoading = false
             this.stockDialogVisible = false
-          }, 500)
+          } catch (e) {
+            this.stockSubmitLoading = false
+            if (e.message !== 'cancel') {
+              this.$message.error('操作失败')
+            }
+          }
         }
       })
     },
     handleSubmit() {
-      this.$refs.formRef.validate(valid => {
+      this.$refs.formRef.validate(async valid => {
         if (valid) {
           this.submitLoading = true
-          setTimeout(() => {
+          try {
             const supplyPoint = this.supplyPoints.find(p => p.id === this.form.supplyPointId)
-            const data = {
+            const saveData = {
               ...this.form,
               supplyPointName: supplyPoint ? supplyPoint.name : ''
             }
             if (this.dialogType === 'add') {
-              this.tableData.unshift({
-                ...data,
-                id: Date.now()
-              })
+              await createSparePart(saveData)
               this.$message.success('新增成功')
             } else {
-              const index = this.tableData.findIndex(item => item.id === this.form.id)
-              if (index > -1) {
-                this.tableData[index] = { ...data }
-              }
+              await updateSparePart(this.form.id, saveData)
               this.$message.success('更新成功')
             }
-            this.submitLoading = false
             this.dialogVisible = false
-          }, 500)
+            this.loadData()
+          } catch (e) {
+            this.$message.error('保存失败')
+          } finally {
+            this.submitLoading = false
+          }
         }
       })
     }

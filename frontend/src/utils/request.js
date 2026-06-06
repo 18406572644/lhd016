@@ -13,6 +13,7 @@ service.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
+    config.headers['X-Username'] = store.state.user.userInfo?.username || 'admin'
     return config
   },
   error => {

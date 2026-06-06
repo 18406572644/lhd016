@@ -15,6 +15,14 @@ export function getSupplyPoint(id) {
   })
 }
 
+export function deleteSupplyPoint(id, reason) {
+  return request({
+    url: `/supply-points/${id}`,
+    method: 'delete',
+    params: { reason }
+  })
+}
+
 export function createSupplyPoint(data) {
   return request({
     url: '/supply-points',
@@ -28,13 +36,6 @@ export function updateSupplyPoint(id, data) {
     url: `/supply-points/${id}`,
     method: 'put',
     data
-  })
-}
-
-export function deleteSupplyPoint(id) {
-  return request({
-    url: `/supply-points/${id}`,
-    method: 'delete'
   })
 }
 

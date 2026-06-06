@@ -1,5 +1,6 @@
 package com.bike.controller;
 
+import com.bike.common.OperationLog;
 import com.bike.common.PageQuery;
 import com.bike.common.Result;
 import com.bike.entity.SupplyPoint;
@@ -54,6 +55,7 @@ public class SupplyPointController {
 
     @ApiOperation("新增补给点")
     @PostMapping
+    @OperationLog(module = "补给点管理", operationType = "新增")
     public Result<Void> save(@RequestBody SupplyPoint supplyPoint) {
         supplyPointService.save(supplyPoint);
         return Result.success();
@@ -61,6 +63,7 @@ public class SupplyPointController {
 
     @ApiOperation("更新补给点")
     @PutMapping("/{id}")
+    @OperationLog(module = "补给点管理", operationType = "修改", sensitive = true)
     public Result<Void> update(@PathVariable Long id, @RequestBody SupplyPoint supplyPoint) {
         supplyPoint.setId(id);
         supplyPointService.updateById(supplyPoint);
@@ -69,7 +72,8 @@ public class SupplyPointController {
 
     @ApiOperation("删除补给点")
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    @OperationLog(module = "补给点管理", operationType = "删除", sensitive = true)
+    public Result<Void> delete(@PathVariable Long id, @RequestParam String reason) {
         supplyPointService.removeById(id);
         return Result.success();
     }

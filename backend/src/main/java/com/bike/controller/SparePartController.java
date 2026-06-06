@@ -1,9 +1,11 @@
 package com.bike.controller;
 
+import com.bike.common.OperationLog;
 import com.bike.common.PageQuery;
 import com.bike.common.Result;
 import com.bike.entity.SparePart;
 import com.bike.entity.StockRecord;
+import com.bike.entity.dto.SensitiveOperationDTO;
 import com.bike.entity.dto.StockInOutDTO;
 import com.bike.service.SparePartService;
 import io.swagger.annotations.Api;
@@ -61,6 +63,7 @@ public class SparePartController {
     }
 
     @ApiOperation("新增配件")
+    @OperationLog(module = "配件库存", operationType = "新增")
     @PostMapping
     public Result<Void> save(@RequestBody SparePart sparePart) {
         sparePartService.save(sparePart);
@@ -68,6 +71,7 @@ public class SparePartController {
     }
 
     @ApiOperation("更新配件")
+    @OperationLog(module = "配件库存", operationType = "修改")
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @RequestBody SparePart sparePart) {
         sparePart.setId(id);
@@ -76,22 +80,25 @@ public class SparePartController {
     }
 
     @ApiOperation("删除配件")
+    @OperationLog(module = "配件库存", operationType = "删除", sensitive = true)
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable Long id, @RequestBody SensitiveOperationDTO dto, @RequestParam String reason) {
         sparePartService.removeById(id);
         return Result.success();
     }
 
     @ApiOperation("入库")
+    @OperationLog(module = "配件库存", operationType = "入库", sensitive = true)
     @PostMapping("/{id}/stock-in")
-    public Result<Void> stockIn(@PathVariable Long id, @RequestBody StockInOutDTO dto) {
+    public Result<Void> stockIn(@PathVariable Long id, @RequestBody StockInOutDTO dto, @RequestParam(required = false) String reason) {
         sparePartService.stockIn(id, dto);
         return Result.successMsg("入库成功");
     }
 
     @ApiOperation("出库")
+    @OperationLog(module = "配件库存", operationType = "出库", sensitive = true)
     @PostMapping("/{id}/stock-out")
-    public Result<Void> stockOut(@PathVariable Long id, @RequestBody StockInOutDTO dto) {
+    public Result<Void> stockOut(@PathVariable Long id, @RequestBody StockInOutDTO dto, @RequestParam(required = false) String reason) {
         sparePartService.stockOut(id, dto);
         return Result.successMsg("出库成功");
     }

@@ -16,12 +16,15 @@ export function getHelpRequestListWithShop(params) {
   })
 }
 
-export function getHelpRequest(id) {
+export function deleteHelpRequest(id, reason) {
   return request({
     url: `/help-requests/${id}`,
-    method: 'get'
+    method: 'delete',
+    params: { reason }
   })
 }
+
+
 
 export function getHelpRequestWithShop(id) {
   return request({
@@ -75,12 +78,5 @@ export function handleHelpRequest(id, data) {
     url: `/help-requests/${id}/handle`,
     method: 'put',
     data
-  })
-}
-
-export function deleteHelpRequest(id) {
-  return request({
-    url: `/help-requests/${id}`,
-    method: 'delete'
   })
 }

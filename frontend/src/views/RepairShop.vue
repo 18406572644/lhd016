@@ -178,6 +178,7 @@
 
 <script>
 import { formatDate, getLevelType } from '@/utils'
+import { sensitiveConfirm } from '@/utils/sensitiveConfirm'
 import { getRepairShopList, getRepairShop, createRepairShop, updateRepairShop, deleteRepairShop } from '@/api/repairShop'
 import MapPicker from '@/components/MapPicker.vue'
 
@@ -254,21 +255,26 @@ export default {
       }
       this.$message.success('已选择位置')
     },
-    loadData() {
+    async loadData() {
       this.loading = true
-      this.tableData = [
-        { id: 1, name: '西湖一级维修中心', address: '西湖区体育场路150号', longitude: 120.1650, latitude: 30.2750, level: '一级', area: '西湖区', serviceScope: '整车维修、配件更换、保养服务', contactPerson: '刘师傅', contactPhone: '13900139001', staffCount: 8, businessHours: '08:00-20:00', createTime: '2024-01-15 10:30:00' },
-        { id: 2, name: '滨江二级维修站', address: '滨江区江南大道100号', longitude: 120.2100, latitude: 30.2050, level: '二级', area: '滨江区', serviceScope: '普通维修、充气、补胎', contactPerson: '陈师傅', contactPhone: '13900139002', staffCount: 4, businessHours: '09:00-18:00', createTime: '2024-01-16 09:20:00' },
-        { id: 3, name: '余杭三级维修点', address: '余杭区余杭塘路200号', longitude: 120.0500, latitude: 30.2900, level: '三级', area: '余杭区', serviceScope: '简单维修、应急处理', contactPerson: '周师傅', contactPhone: '13900139003', staffCount: 2, businessHours: '10:00-17:00', createTime: '2024-01-17 14:45:00' },
-        { id: 4, name: '上城二级维修站', address: '上城区庆春路88号', longitude: 120.1700, latitude: 30.2600, level: '二级', area: '上城区', serviceScope: '普通维修、配件更换', contactPerson: '吴师傅', contactPhone: '13900139004', staffCount: 5, businessHours: '08:30-19:00', createTime: '2024-01-18 11:00:00' }
-      ]
-      this.pageInfo.total = this.tableData.length
-      this.loading = false
+      try {
+        const params = {
+          pageNum: this.pageInfo.pageNum,
+          pageSize: this.pageInfo.pageSize,
+          ...this.searchForm
+        }
+        const data = await getRepairShopList(params)
+        this.tableData = data.list || data
+        this.pageInfo.total = data.total || this.tableData.length
+      } catch (e) {
+        this.$message.error('加载数据失败')
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch() {
       this.pageInfo.pageNum = 1
       this.loadData()
-      this.$message.success('搜索完成')
     },
     handleReset() {
       this.searchForm = { name: '', area: '', level: '' }
@@ -308,42 +314,51 @@ export default {
       this.form = { ...row }
       this.dialogVisible = true
     },
-    handleView(row) {
-      this.currentRow = { ...row }
-      this.detailVisible = true
+   async handleView(row) {
+      try {
+        const data = await getRepairShop(row.id)
+        this.currentRow = data
+        this.detailVisible = true
+      } catch (e) {
+        this.$message.error('获取详情失败')
+      }
     },
-    handleDelete(row) {
-      this.$confirm(`确定要删除维修点「${row.name}」吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.tableData = this.tableData.filter(item => item.id !== row.id)
+    async handleDelete(row) {
+      try {
+        const reason = await sensitiveConfirm({
+          title: '删除维修点',
+          message: `您正在删除维修点「${row.name}」，此操作不可恢复，请输入删除原因：`,
+          confirmButtonText: '确认删除',
+          type: 'danger'
+        })
+        await deleteRepairShop(row.id, reason)
         this.$message.success('删除成功')
-      }).catch(() => {})
+        this.loadData()
+      } catch (e) {
+        if (e.message !== 'cancel') {
+          this.$message.error('删除失败')
+        }
+      }
     },
     handleSubmit() {
-      this.$refs.formRef.validate(valid => {
+      this.$refs.formRef.validate(async valid => {
         if (valid) {
           this.submitLoading = true
-          setTimeout(() => {
+          try {
             if (this.dialogType === 'add') {
-              this.tableData.unshift({
-                ...this.form,
-                id: Date.now(),
-                createTime: new Date().toLocaleString()
-              })
+              await createRepairShop(this.form)
               this.$message.success('新增成功')
             } else {
-              const index = this.tableData.findIndex(item => item.id === this.form.id)
-              if (index > -1) {
-                this.tableData[index] = { ...this.form }
-              }
+              await updateRepairShop(this.form.id, this.form)
               this.$message.success('更新成功')
             }
-            this.submitLoading = false
             this.dialogVisible = false
-          }, 500)
+            this.loadData()
+          } catch (e) {
+            this.$message.error('保存失败')
+          } finally {
+            this.submitLoading = false
+          }
         }
       })
     }

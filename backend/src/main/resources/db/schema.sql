@@ -116,3 +116,36 @@ CREATE INDEX IF NOT EXISTS idx_check_detail_check ON check_detail(check_id);
 CREATE INDEX IF NOT EXISTS idx_supply_point_area ON supply_point(area);
 CREATE INDEX IF NOT EXISTS idx_repair_shop_area ON repair_shop(area);
 CREATE INDEX IF NOT EXISTS idx_repair_shop_location ON repair_shop(longitude, latitude);
+
+-- 操作日志表
+CREATE TABLE IF NOT EXISTS operation_log (
+    id BIGSERIAL PRIMARY KEY,
+    operator VARCHAR(50) NOT NULL,
+    operate_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    operation_type VARCHAR(20) NOT NULL,
+    module VARCHAR(50) NOT NULL,
+    operation_content JSON,
+    ip_address VARCHAR(50),
+    reason TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 求助状态流转表
+CREATE TABLE IF NOT EXISTS help_status_flow (
+    id BIGSERIAL PRIMARY KEY,
+    help_request_id BIGINT NOT NULL REFERENCES help_request(id),
+    from_status VARCHAR(20),
+    to_status VARCHAR(20) NOT NULL,
+    operator VARCHAR(50),
+    operate_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    remark TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 索引
+CREATE INDEX IF NOT EXISTS idx_operation_log_operator ON operation_log(operator);
+CREATE INDEX IF NOT EXISTS idx_operation_log_time ON operation_log(operate_time);
+CREATE INDEX IF NOT EXISTS idx_operation_log_module ON operation_log(module);
+CREATE INDEX IF NOT EXISTS idx_operation_log_type ON operation_log(operation_type);
+CREATE INDEX IF NOT EXISTS idx_help_status_flow_request ON help_status_flow(help_request_id);
+CREATE INDEX IF NOT EXISTS idx_help_status_flow_time ON help_status_flow(operate_time);

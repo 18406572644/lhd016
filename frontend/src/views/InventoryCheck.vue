@@ -85,7 +85,7 @@
           :page-sizes="[10, 20, 50]"
           :page-size="pageInfo.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredTableData.length"
+          :total="pageInfo.total"
           background
         ></el-pagination>
       </div>
@@ -229,6 +229,8 @@
 
 <script>
 import { formatDate, getStatusType, getStatusText, generateCheckNo } from '@/utils'
+import { sensitiveConfirm } from '@/utils/sensitiveConfirm'
+import { getInventoryCheckList, getInventoryCheck, createInventoryCheck, completeInventoryCheck, deleteInventoryCheck } from '@/api/inventoryCheck'
 
 export default {
   name: 'InventoryCheck',
@@ -330,50 +332,26 @@ export default {
       }))
       this.form.details = parts
     },
-    loadData() {
+    async loadData() {
       this.loading = true
-      this.tableData = [
-        {
-          id: 1, checkNo: 'PD20240120001', supplyPointId: 1, supplyPointName: '滨江公园补给站',
-          checkDate: '2024-01-20', checker: '张三', totalItems: 5, diffCount: 1,
-          status: 'completed', remark: '月度例行盘点',
-          createTime: '2024-01-20 14:30:00',
-          details: [
-            { partId: 1, partName: '内胎', systemQuantity: 5, actualQuantity: 4, diffQuantity: -1 },
-            { partId: 2, partName: '外胎', systemQuantity: 12, actualQuantity: 12, diffQuantity: 0 },
-            { partId: 3, partName: '刹车皮', systemQuantity: 20, actualQuantity: 20, diffQuantity: 0 },
-            { partId: 7, partName: '矿泉水', systemQuantity: 200, actualQuantity: 195, diffQuantity: -5 },
-            { partId: 8, partName: '能量棒', systemQuantity: 15, actualQuantity: 15, diffQuantity: 0 }
-          ]
-        },
-        {
-          id: 2, checkNo: 'PD20240119001', supplyPointId: 2, supplyPointName: '西湖休息站',
-          checkDate: '2024-01-19', checker: '李四', totalItems: 3, diffCount: 0,
-          status: 'completed', remark: '周盘点',
-          createTime: '2024-01-19 15:00:00',
-          details: [
-            { partId: 4, partName: '刹车线', systemQuantity: 8, actualQuantity: 8, diffQuantity: 0 },
-            { partId: 6, partName: '脚踏', systemQuantity: 18, actualQuantity: 18, diffQuantity: 0 },
-            { partId: 7, partName: '矿泉水', systemQuantity: 100, actualQuantity: 100, diffQuantity: 0 }
-          ]
-        },
-        {
-          id: 3, checkNo: 'PD20240121001', supplyPointId: 3, supplyPointName: '科技园区充电站',
-          checkDate: '2024-01-21', checker: '王五', totalItems: 2, diffCount: 0,
-          status: 'draft', remark: '',
-          createTime: '2024-01-21 09:00:00',
-          details: [
-            { partId: 7, partName: '矿泉水', systemQuantity: 80, actualQuantity: 80, diffQuantity: 0 },
-            { partId: 8, partName: '能量棒', systemQuantity: 25, actualQuantity: 25, diffQuantity: 0 }
-          ]
+      try {
+        const params = {
+          pageNum: this.pageInfo.pageNum,
+          pageSize: this.pageInfo.pageSize,
+          ...this.searchForm
         }
-      ]
-      this.pageInfo.total = this.tableData.length
-      this.loading = false
+        const data = await getInventoryCheckList(params)
+        this.tableData = data.list || data
+        this.pageInfo.total = data.total || this.tableData.length
+      } catch (e) {
+        this.$message.error('加载数据失败')
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch() {
       this.pageInfo.pageNum = 1
-      this.$message.success('搜索完成')
+      this.loadData()
     },
     handleReset() {
       this.searchForm = {
@@ -382,12 +360,16 @@ export default {
         checkDate: '',
         status: ''
       }
+      this.pageInfo.pageNum = 1
+      this.loadData()
     },
     handleSizeChange(val) {
       this.pageInfo.pageSize = val
+      this.loadData()
     },
     handleCurrentChange(val) {
       this.pageInfo.pageNum = val
+      this.loadData()
     },
     handleCreate() {
       this.dialogType = 'add'
@@ -414,27 +396,39 @@ export default {
       this.form = { ...row, details: JSON.parse(JSON.stringify(row.details || [])) }
       this.dialogVisible = true
     },
-    handleView(row) {
-      this.currentRow = { ...row, details: JSON.parse(JSON.stringify(row.details || [])) }
-      this.detailVisible = true
+   async handleView(row) {
+      try {
+        const data = await getInventoryCheck(row.id)
+        this.currentRow = data
+        this.detailVisible = true
+      } catch (e) {
+        this.$message.error('获取详情失败')
+      }
     },
-    handleDelete(row) {
-      this.$confirm(`确定要删除盘点单「${row.checkNo}」吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.tableData = this.tableData.filter(item => item.id !== row.id)
+    async handleDelete(row) {
+      try {
+        const reason = await sensitiveConfirm({
+          title: '删除盘点单',
+          message: `您正在删除盘点单「${row.checkNo}」，此操作不可恢复，请输入删除原因：`,
+          confirmButtonText: '确认删除',
+          type: 'danger'
+        })
+        await deleteInventoryCheck(row.id, reason)
         this.$message.success('删除成功')
-      }).catch(() => {})
+        this.loadData()
+      } catch (e) {
+        if (e.message !== 'cancel') {
+          this.$message.error('删除失败')
+        }
+      }
     },
     handleSaveDraft() {
-      this.$refs.formRef.validate(valid => {
+      this.$refs.formRef.validate(async valid => {
         if (valid) {
           this.submitLoading = true
-          setTimeout(() => {
+          try {
             const supplyPoint = this.supplyPoints.find(p => p.id === this.form.supplyPointId)
-            const data = {
+            const saveData = {
               ...this.form,
               supplyPointName: supplyPoint ? supplyPoint.name : '',
               totalItems: this.form.details.length,
@@ -442,21 +436,18 @@ export default {
               status: 'draft'
             }
             if (this.dialogType === 'add') {
-              this.tableData.unshift({
-                ...data,
-                id: Date.now(),
-                createTime: new Date().toLocaleString()
-              })
+              await createInventoryCheck(saveData)
             } else {
-              const index = this.tableData.findIndex(item => item.id === this.form.id)
-              if (index > -1) {
-                this.tableData[index] = { ...data }
-              }
+              await createInventoryCheck(saveData)
             }
             this.$message.success('草稿已保存')
-            this.submitLoading = false
             this.dialogVisible = false
-          }, 500)
+            this.loadData()
+          } catch (e) {
+            this.$message.error('保存失败')
+          } finally {
+            this.submitLoading = false
+          }
         }
       })
     },
@@ -467,11 +458,11 @@ export default {
             confirmButtonText: '确定完成',
             cancelButtonText: '取消',
             type: 'warning'
-          }).then(() => {
+          }).then(async () => {
             this.completeLoading = true
-            setTimeout(() => {
+            try {
               const supplyPoint = this.supplyPoints.find(p => p.id === this.form.supplyPointId)
-              const data = {
+              const saveData = {
                 ...this.form,
                 supplyPointName: supplyPoint ? supplyPoint.name : '',
                 totalItems: this.form.details.length,
@@ -479,21 +470,18 @@ export default {
                 status: 'completed'
               }
               if (this.dialogType === 'add') {
-                this.tableData.unshift({
-                  ...data,
-                  id: Date.now(),
-                  createTime: new Date().toLocaleString()
-                })
+                await completeInventoryCheck(null, saveData)
               } else {
-                const index = this.tableData.findIndex(item => item.id === this.form.id)
-                if (index > -1) {
-                  this.tableData[index] = { ...data }
-                }
+                await completeInventoryCheck(this.form.id, saveData)
               }
               this.$message.success('盘点已完成')
-              this.completeLoading = false
               this.dialogVisible = false
-            }, 500)
+              this.loadData()
+            } catch (e) {
+              this.$message.error('操作失败')
+            } finally {
+              this.completeLoading = false
+            }
           }).catch(() => {})
         }
       })

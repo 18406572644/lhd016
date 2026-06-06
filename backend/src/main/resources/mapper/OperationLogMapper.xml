@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bike.mapper.OperationLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.bike.entity.OperationLog">
+        <id column="id" property="id"/>
+        <result column="operator" property="operator"/>
+        <result column="operate_time" property="operateTime"/>
+        <result column="operation_type" property="operationType"/>
+        <result column="module" property="module"/>
+        <result column="operation_content" property="operationContent"/>
+        <result column="ip_address" property="ipAddress"/>
+        <result column="reason" property="reason"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT * FROM operation_log
+        <where>
+            <if test="params.operator != null and params.operator != ''">
+                AND operator LIKE '%' || #{params.operator} || '%'
+            </if>
+            <if test="params.module != null and params.module != ''">
+                AND module = #{params.module}
+            </if>
+            <if test="params.operationType != null and params.operationType != ''">
+                AND operation_type = #{params.operationType}
+            </if>
+            <if test="params.startTime != null">
+                AND operate_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND operate_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        ORDER BY operate_time DESC
+    </select>
+
+</mapper>

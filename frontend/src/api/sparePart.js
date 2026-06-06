@@ -8,10 +8,11 @@ export function getSparePartList(params) {
   })
 }
 
-export function getSparePart(id) {
+export function deleteSparePart(id, reason) {
   return request({
     url: `/spare-parts/${id}`,
-    method: 'get'
+    method: 'delete',
+    params: { reason }
   })
 }
 
@@ -31,13 +32,6 @@ export function updateSparePart(id, data) {
   })
 }
 
-export function deleteSparePart(id) {
-  return request({
-    url: `/spare-parts/${id}`,
-    method: 'delete'
-  })
-}
-
 export function getWarningList() {
   return request({
     url: '/spare-parts/warning',
@@ -49,7 +43,8 @@ export function stockIn(id, data) {
   return request({
     url: `/spare-parts/${id}/stock-in`,
     method: 'post',
-    data
+    data,
+    params: { reason: data.reason }
   })
 }
 
@@ -57,7 +52,8 @@ export function stockOut(id, data) {
   return request({
     url: `/spare-parts/${id}/stock-out`,
     method: 'post',
-    data
+    data,
+    params: { reason: data.reason }
   })
 }
 

@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bike.common.BusinessException;
 import com.bike.common.DistanceUtil;
 import com.bike.common.PageQuery;
+import com.bike.common.UserContext;
+import com.bike.service.HelpStatusFlowService;
 import com.bike.entity.HelpRequest;
 import com.bike.entity.RepairShop;
 import com.bike.entity.dto.DispatchDTO;
@@ -39,6 +41,9 @@ public class HelpRequestServiceImpl extends ServiceImpl<HelpRequestMapper, HelpR
     @Autowired
     private RepairShopMapper repairShopMapper;
 
+    @Autowired
+    private HelpStatusFlowService helpStatusFlowService;
+
     @Override
     public PageQuery.PageResult<HelpRequest> pageByCondition(Integer pageNum, Integer pageSize, Map<String, Object> params) {
         Page<HelpRequest> page = new Page<>(pageNum, pageSize);
@@ -68,6 +73,8 @@ public class HelpRequestServiceImpl extends ServiceImpl<HelpRequestMapper, HelpR
         if (request == null) {
             throw new BusinessException("求助记录不存在");
         }
+        String oldStatus = request.getStatus();
+        helpStatusFlowService.recordFlow(id, oldStatus, status, UserContext.getCurrentUser(), null);
         request.setStatus(status);
         if ("completed".equals(status)) {
             request.setHandleTime(LocalDateTime.now());
@@ -80,6 +87,11 @@ public class HelpRequestServiceImpl extends ServiceImpl<HelpRequestMapper, HelpR
         HelpRequest request = getById(id);
         if (request == null) {
             throw new BusinessException("求助记录不存在");
+        }
+        String oldStatus = request.getStatus();
+        String newStatus = dto.getStatus() != null ? dto.getStatus() : oldStatus;
+        if (!oldStatus.equals(newStatus)) {
+            helpStatusFlowService.recordFlow(id, oldStatus, newStatus, dto.getHandler() != null ? dto.getHandler() : UserContext.getCurrentUser(), dto.getHandleResult());
         }
         if (dto.getStatus() != null) {
             request.setStatus(dto.getStatus());
@@ -102,7 +114,9 @@ public class HelpRequestServiceImpl extends ServiceImpl<HelpRequestMapper, HelpR
         if (entity.getStatus() == null) {
             entity.setStatus("pending");
         }
-        return super.save(entity);
+        boolean result = super.save(entity);
+        helpStatusFlowService.recordFlow(entity.getId(), null, entity.getStatus(), UserContext.getCurrentUser(), "创建求助");
+        return result;
     }
 
     @Override
@@ -211,7 +225,9 @@ public class HelpRequestServiceImpl extends ServiceImpl<HelpRequestMapper, HelpR
         if (request.getLatitude() == null) {
             request.setLatitude(latitude);
         }
+        String oldStatus = request.getStatus();
         request.setStatus("processing");
+        helpStatusFlowService.recordFlow(dto.getHelpRequestId(), oldStatus, "processing", UserContext.getCurrentUser(), "分配维修点");
 
         updateById(request);
 

@@ -356,8 +356,8 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="求助详情" :visible.sync="detailVisible" width="650px">
-      <el-descriptions :column="2" border>
+    <el-dialog title="求助详情" :visible.sync="detailVisible" width="700px">
+      <el-descriptions :column="2" border size="small">
         <el-descriptions-item label="求助人">{{ currentRow.requesterName }}</el-descriptions-item>
         <el-descriptions-item label="联系电话">{{ currentRow.requesterPhone }}</el-descriptions-item>
         <el-descriptions-item label="求助类型">
@@ -393,12 +393,22 @@
         <el-descriptions-item label="问题描述" :span="2">{{ currentRow.description }}</el-descriptions-item>
         <el-descriptions-item label="处理结果" :span="2">{{ currentRow.handleResult || '暂无' }}</el-descriptions-item>
       </el-descriptions>
+
+      <el-divider content-position="left">
+        <i class="el-icon-time"></i> 状态流转记录
+      </el-divider>
+
+      <div v-loading="statusFlowLoading" class="status-flow-section">
+        <status-timeline :records="statusFlowRecords"></status-timeline>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { formatDate, getStatusType, getStatusText, getUrgencyType } from '@/utils'
+import { sensitiveConfirm } from '@/utils/sensitiveConfirm'
+import StatusTimeline from '@/components/StatusTimeline.vue'
 import {
   getHelpRequestListWithShop,
   getHelpRequestWithShop,
@@ -410,9 +420,13 @@ import {
   deleteHelpRequest
 } from '@/api/helpRequest'
 import { getRepairShopList } from '@/api/repairShop'
+import { getStatusFlows } from '@/api/helpStatusFlow.js'
 
 export default {
   name: 'HelpRequest',
+  components: {
+    StatusTimeline
+  },
   data() {
     return {
       loading: false,
@@ -421,6 +435,7 @@ export default {
       dispatchLoading: false,
       adjustLoading: false,
       recommendLoading: false,
+      statusFlowLoading: false,
       dialogVisible: false,
       processDialogVisible: false,
       detailVisible: false,
@@ -428,6 +443,7 @@ export default {
       adjustDialogVisible: false,
       dialogType: 'add',
       currentRow: {},
+      statusFlowRecords: [],
       recommendedShops: [],
       selectedShopId: null,
       allShops: [],
@@ -525,11 +541,9 @@ export default {
           pageSize: this.pageInfo.pageSize,
           ...this.searchForm
         }
-        const res = await getHelpRequestListWithShop(params)
-        if (res.code === 200) {
-          this.tableData = res.data.list
-          this.pageInfo.total = res.data.total
-        }
+        const data = await getHelpRequestListWithShop(params)
+        this.tableData = data.list
+        this.pageInfo.total = data.total
       } catch (e) {
         this.$message.error('加载数据失败')
       } finally {
@@ -538,10 +552,8 @@ export default {
     },
     async loadAllShops() {
       try {
-        const res = await getRepairShopList({ pageNum: 1, pageSize: 100 })
-        if (res.code === 200) {
-          this.allShops = res.data.list
-        }
+        const data = await getRepairShopList({ pageNum: 1, pageSize: 100 })
+        this.allShops = data.list
       } catch (e) {
         console.error('加载维修点列表失败', e)
       }
@@ -558,14 +570,12 @@ export default {
           latitude: this.form.latitude,
           helpType: this.form.helpType
         }
-        const res = await getRecommendedShops(params)
-        if (res.code === 200) {
-          this.recommendedShops = res.data
-          if (this.recommendedShops.length > 0) {
-            this.selectedShopId = this.recommendedShops[0].repairShop.id
-          } else {
-            this.selectedShopId = null
-          }
+        const data = await getRecommendedShops(params)
+        this.recommendedShops = data
+        if (this.recommendedShops.length > 0) {
+          this.selectedShopId = this.recommendedShops[0].repairShop.id
+        } else {
+          this.selectedShopId = null
         }
       } catch (e) {
         this.$message.error('获取推荐维修点失败')
@@ -653,12 +663,10 @@ export default {
       this.recommendLoading = true
       try {
         const params = { longitude, latitude, helpType }
-        const res = await getRecommendedShops(params)
-        if (res.code === 200) {
-          this.recommendedShops = res.data
-          if (this.recommendedShops.length > 0) {
-            this.selectedShopId = this.recommendedShops[0].repairShop.id
-          }
+        const data = await getRecommendedShops(params)
+        this.recommendedShops = data
+        if (this.recommendedShops.length > 0) {
+          this.selectedShopId = this.recommendedShops[0].repairShop.id
         }
       } catch (e) {
         this.$message.error('获取推荐维修点失败')
@@ -678,12 +686,10 @@ export default {
           repairShopId: this.selectedShopId,
           notifyContact: this.dispatchForm.notifyContact
         }
-        const res = await dispatchHelpRequest(dto)
-        if (res.code === 200) {
-          this.$message.success('分配成功，已通知维修点负责人')
-          this.dispatchDialogVisible = false
-          this.loadData()
-        }
+        await dispatchHelpRequest(dto)
+        this.$message.success('分配成功，已通知维修点负责人')
+        this.dispatchDialogVisible = false
+        this.loadData()
       } catch (e) {
         this.$message.error('分配失败')
       } finally {
@@ -705,16 +711,14 @@ export default {
       }
       this.adjustLoading = true
       try {
-        const res = await adjustDispatch(
+        await adjustDispatch(
           this.currentRow.id,
           this.adjustForm.repairShopId,
           this.adjustForm.notify
         )
-        if (res.code === 200) {
-          this.$message.success('调整成功')
-          this.adjustDialogVisible = false
-          this.loadData()
-        }
+        this.$message.success('调整成功')
+        this.adjustDialogVisible = false
+        this.loadData()
       } catch (e) {
         this.$message.error('调整失败')
       } finally {
@@ -735,12 +739,10 @@ export default {
         if (valid) {
           this.processSubmitLoading = true
           try {
-            const res = await handleHelpRequest(this.currentRow.id, this.processForm)
-            if (res.code === 200) {
-              this.$message.success('处理成功')
-              this.processDialogVisible = false
-              this.loadData()
-            }
+            await handleHelpRequest(this.currentRow.id, this.processForm)
+            this.$message.success('处理成功')
+            this.processDialogVisible = false
+            this.loadData()
           } catch (e) {
             this.$message.error('处理失败')
           } finally {
@@ -751,31 +753,41 @@ export default {
     },
     async handleView(row) {
       try {
-        const res = await getHelpRequestWithShop(row.id)
-        if (res.code === 200) {
-          this.currentRow = res.data
-          this.detailVisible = true
-        }
+        const data = await getHelpRequestWithShop(row.id)
+        this.currentRow = data
+        this.detailVisible = true
+        this.loadStatusFlow(row.id)
       } catch (e) {
         this.$message.error('获取详情失败')
       }
     },
-    handleDelete(row) {
-      this.$confirm(`确定要删除这条求助记录吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          const res = await deleteHelpRequest(row.id)
-          if (res.code === 200) {
-            this.$message.success('删除成功')
-            this.loadData()
-          }
-        } catch (e) {
+    async loadStatusFlow(id) {
+      this.statusFlowLoading = true
+      try {
+        const data = await getStatusFlows(id)
+        this.statusFlowRecords = data
+      } catch (e) {
+        console.error('加载状态流转失败', e)
+      } finally {
+        this.statusFlowLoading = false
+      }
+    },
+    async handleDelete(row) {
+      try {
+        const reason = await sensitiveConfirm({
+          title: '删除求助记录',
+          message: `您正在删除求助记录「${row.requesterName} - ${row.helpType}」，此操作不可恢复，请输入删除原因：`,
+          confirmButtonText: '确认删除',
+          type: 'danger'
+        })
+        await deleteHelpRequest(row.id, reason)
+        this.$message.success('删除成功')
+        this.loadData()
+      } catch (e) {
+        if (e.message !== 'cancel') {
           this.$message.error('删除失败')
         }
-      }).catch(() => {})
+      }
     },
     handleSubmit() {
       this.$refs.formRef.validate(async valid => {
@@ -783,12 +795,10 @@ export default {
           this.submitLoading = true
           try {
             const saveData = { ...this.form }
-            const res = await createHelpRequest(saveData)
-            if (res.code === 200) {
-              this.$message.success('登记成功')
-              this.dialogVisible = false
-              this.loadData()
-            }
+            await createHelpRequest(saveData)
+            this.$message.success('登记成功')
+            this.dialogVisible = false
+            this.loadData()
           } catch (e) {
             this.$message.error('保存失败')
           } finally {
@@ -807,24 +817,19 @@ export default {
           this.submitLoading = true
           try {
             const saveData = { ...this.form }
-            const saveRes = await createHelpRequest(saveData)
-            if (saveRes.code === 200) {
-              const newId = saveRes.data || (await this.getLatestId())
-              const dispatchDto = {
-                helpRequestId: newId,
-                repairShopId: this.selectedShopId,
-                longitude: this.form.longitude,
-                latitude: this.form.latitude,
-                helpType: this.form.helpType,
-                notifyContact: true
-              }
-              const dispatchRes = await dispatchHelpRequest(dispatchDto)
-              if (dispatchRes.code === 200) {
-                this.$message.success('登记并分配成功，已通知维修点负责人')
-                this.dialogVisible = false
-                this.loadData()
-              }
+            const newId = await createHelpRequest(saveData) || (await this.getLatestId())
+            const dispatchDto = {
+              helpRequestId: newId,
+              repairShopId: this.selectedShopId,
+              longitude: this.form.longitude,
+              latitude: this.form.latitude,
+              helpType: this.form.helpType,
+              notifyContact: true
             }
+            await dispatchHelpRequest(dispatchDto)
+            this.$message.success('登记并分配成功，已通知维修点负责人')
+            this.dialogVisible = false
+            this.loadData()
           } catch (e) {
             this.$message.error('操作失败')
           } finally {
@@ -834,9 +839,9 @@ export default {
       })
     },
     async getLatestId() {
-      const res = await getHelpRequestListWithShop({ pageNum: 1, pageSize: 1 })
-      if (res.code === 200 && res.data.list.length > 0) {
-        return res.data.list[0].id
+      const data = await getHelpRequestListWithShop({ pageNum: 1, pageSize: 1 })
+      if (data.list.length > 0) {
+        return data.list[0].id
       }
       return null
     }
@@ -881,6 +886,12 @@ export default {
 
   .process-desc {
     margin-bottom: 20px;
+  }
+
+  .status-flow-section {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0 10px;
   }
 
   .recommend-section {

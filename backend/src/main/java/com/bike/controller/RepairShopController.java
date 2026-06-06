@@ -1,5 +1,6 @@
 package com.bike.controller;
 
+import com.bike.common.OperationLog;
 import com.bike.common.PageQuery;
 import com.bike.common.Result;
 import com.bike.entity.RepairShop;
@@ -51,6 +52,7 @@ public class RepairShopController {
     }
 
     @ApiOperation("新增维修点")
+    @OperationLog(module = "维修点管理", operationType = "新增")
     @PostMapping
     public Result<Void> save(@RequestBody RepairShop repairShop) {
         repairShopService.save(repairShop);
@@ -58,6 +60,7 @@ public class RepairShopController {
     }
 
     @ApiOperation("更新维修点")
+    @OperationLog(module = "维修点管理", operationType = "修改", sensitive = true)
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @RequestBody RepairShop repairShop) {
         repairShop.setId(id);
@@ -66,8 +69,9 @@ public class RepairShopController {
     }
 
     @ApiOperation("删除维修点")
+    @OperationLog(module = "维修点管理", operationType = "删除", sensitive = true)
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable Long id, @RequestParam String reason) {
         repairShopService.removeById(id);
         return Result.success();
     }

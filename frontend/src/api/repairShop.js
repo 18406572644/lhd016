@@ -15,6 +15,14 @@ export function getRepairShop(id) {
   })
 }
 
+export function deleteRepairShop(id, reason) {
+  return request({
+    url: `/repair-shops/${id}`,
+    method: 'delete',
+    params: { reason }
+  })
+}
+
 export function createRepairShop(data) {
   return request({
     url: '/repair-shops',
@@ -28,12 +36,5 @@ export function updateRepairShop(id, data) {
     url: `/repair-shops/${id}`,
     method: 'put',
     data
-  })
-}
-
-export function deleteRepairShop(id) {
-  return request({
-    url: `/repair-shops/${id}`,
-    method: 'delete'
   })
 }

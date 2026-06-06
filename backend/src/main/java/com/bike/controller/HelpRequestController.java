@@ -1,5 +1,6 @@
 package com.bike.controller;
 
+import com.bike.common.OperationLog;
 import com.bike.common.PageQuery;
 import com.bike.common.Result;
 import com.bike.entity.HelpRequest;
@@ -92,6 +93,7 @@ public class HelpRequestController {
     }
 
     @ApiOperation("新增求助登记")
+    @OperationLog(module = "求助登记", operationType = "新增")
     @PostMapping
     public Result<Void> save(@RequestBody HelpRequest helpRequest) {
         helpRequestService.save(helpRequest);
@@ -99,6 +101,7 @@ public class HelpRequestController {
     }
 
     @ApiOperation("分配求助到维修点")
+    @OperationLog(module = "求助登记", operationType = "状态变更")
     @PostMapping("/dispatch")
     public Result<Void> dispatch(@RequestBody DispatchDTO dto) {
         helpRequestService.dispatchHelpRequest(dto);
@@ -106,6 +109,7 @@ public class HelpRequestController {
     }
 
     @ApiOperation("手动调整分配结果")
+    @OperationLog(module = "求助登记", operationType = "状态变更")
     @PutMapping("/{id}/adjust-dispatch")
     public Result<Void> adjustDispatch(
             @PathVariable Long id,
@@ -116,6 +120,7 @@ public class HelpRequestController {
     }
 
     @ApiOperation("更新求助状态")
+    @OperationLog(module = "求助登记", operationType = "状态变更")
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         helpRequestService.updateStatus(id, status);
@@ -123,6 +128,7 @@ public class HelpRequestController {
     }
 
     @ApiOperation("处理求助")
+    @OperationLog(module = "求助登记", operationType = "状态变更")
     @PutMapping("/{id}/handle")
     public Result<Void> handleHelp(@PathVariable Long id, @RequestBody HandleHelpDTO dto) {
         helpRequestService.handleHelp(id, dto);
@@ -130,8 +136,9 @@ public class HelpRequestController {
     }
 
     @ApiOperation("删除求助登记")
+    @OperationLog(module = "求助登记", operationType = "删除", sensitive = true)
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable Long id, @RequestParam String reason) {
         helpRequestService.removeById(id);
         return Result.success();
     }

@@ -95,6 +95,18 @@ const routes = [
         meta: { title: '物资盘点', icon: 'el-icon-document' }
       }
     ]
+  },
+  {
+    path: '/operation-logs',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'OperationLog',
+        component: () => import('@/views/OperationLog.vue'),
+        meta: { title: '操作日志', icon: 'el-icon-document-copy' }
+      }
+    ]
   }
 ]
 
