@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.bike.entity.SparePart;
+import com.bike.entity.SupplyPoint;
+import com.bike.service.SupplyPointService;
+
 @Service
 public class InventoryAnalysisServiceImpl implements InventoryAnalysisService {
 
@@ -26,6 +30,9 @@ public class InventoryAnalysisServiceImpl implements InventoryAnalysisService {
 
     @Autowired
     private InventoryCheckMapper inventoryCheckMapper;
+
+    @Autowired
+    private SupplyPointService supplyPointService;
 
     @Override
     public InventoryAnalysisOverviewVO getOverview() {
@@ -449,5 +456,24 @@ public class InventoryAnalysisServiceImpl implements InventoryAnalysisService {
         }
 
         return score;
+    }
+
+    @Override
+    public Map<String, Object> getFilterOptions() {
+        Map<String, Object> result = new HashMap<>();
+
+        List<SupplyPoint> supplyPoints = supplyPointService.listAll();
+        result.put("supplyPoints", supplyPoints);
+
+        List<SparePart> parts = sparePartMapper.selectList(null);
+        Set<String> categories = new LinkedHashSet<>();
+        for (SparePart part : parts) {
+            if (part.getCategory() != null && !part.getCategory().isEmpty()) {
+                categories.add(part.getCategory());
+            }
+        }
+        result.put("categories", new ArrayList<>(categories));
+
+        return result;
     }
 }

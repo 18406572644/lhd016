@@ -61,7 +61,7 @@
 
     <select id="selectStockInOutTrend" resultType="com.bike.entity.dto.StockInOutTrendVO">
         SELECT
-            TO_CHAR(r.operate_time, 'YYYY-MM') AS month,
+            FORMATDATETIME(r.operate_time, 'yyyy-MM') AS "month",
             p.category AS category,
             COALESCE(SUM(CASE WHEN r.type = 'in' THEN r.quantity ELSE 0 END), 0) AS stockInQuantity,
             COALESCE(SUM(CASE WHEN r.type = 'out' THEN r.quantity ELSE 0 END), 0) AS stockOutQuantity,
@@ -80,8 +80,8 @@
         <if test="supplyPointId != null">
             AND p.supply_point_id = #{supplyPointId}
         </if>
-        GROUP BY TO_CHAR(r.operate_time, 'YYYY-MM'), p.category
-        ORDER BY month DESC
+        GROUP BY FORMATDATETIME(r.operate_time, 'yyyy-MM'), p.category
+        ORDER BY "month" DESC
     </select>
 
     <select id="selectAvgTurnoverRate" resultType="java.math.BigDecimal">

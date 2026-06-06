@@ -51,3 +51,10 @@ export function getSupplyPointComparison() {
     method: 'get'
   })
 }
+
+export function getFilterOptions() {
+  return request({
+    url: '/inventory-analysis/filter-options',
+    method: 'get'
+  })
+}

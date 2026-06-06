@@ -57,33 +57,33 @@
     </select>
 
     <select id="selectCategoryStats" resultType="com.bike.entity.dto.CategoryStatsVO">
-        SELECT category AS name, SUM(stock_quantity) AS value
+        SELECT category AS name, SUM(stock_quantity) AS "value"
         FROM spare_part
         GROUP BY category
-        ORDER BY value DESC
+        ORDER BY "value" DESC
     </select>
 
     <select id="selectInventoryValueByCategory" resultType="com.bike.entity.dto.InventoryValueVO">
         SELECT
             category AS name,
-            SUM(stock_quantity * unit_price) AS value,
+            SUM(stock_quantity * unit_price) AS "value",
             COUNT(*) AS itemCount,
             'category' AS dimension
         FROM spare_part
         GROUP BY category
-        ORDER BY value DESC
+        ORDER BY "value" DESC
     </select>
 
     <select id="selectInventoryValueBySupplyPoint" resultType="com.bike.entity.dto.InventoryValueVO">
         SELECT
             s.name AS name,
-            SUM(sp.stock_quantity * sp.unit_price) AS value,
+            SUM(sp.stock_quantity * sp.unit_price) AS "value",
             COUNT(*) AS itemCount,
             'supplyPoint' AS dimension
         FROM spare_part sp
         LEFT JOIN supply_point s ON sp.supply_point_id = s.id
         GROUP BY s.name
-        ORDER BY value DESC
+        ORDER BY "value" DESC
     </select>
 
     <select id="selectAbcClassificationRaw" resultType="com.bike.entity.dto.AbcClassificationVO">

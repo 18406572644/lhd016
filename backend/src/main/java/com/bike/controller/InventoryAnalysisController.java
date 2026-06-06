@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @Api(tags = "库存分析")
 @RestController
@@ -81,5 +82,11 @@ public class InventoryAnalysisController {
     @GetMapping("/supply-point-comparison")
     public Result<List<SupplyPointComparisonVO>> getSupplyPointComparison() {
         return Result.success(inventoryAnalysisService.getSupplyPointComparison());
+    }
+
+    @ApiOperation("获取筛选条件选项（补给点、分类）")
+    @GetMapping("/filter-options")
+    public Result<Map<String, Object>> getFilterOptions() {
+        return Result.success(inventoryAnalysisService.getFilterOptions());
     }
 }

@@ -260,10 +260,9 @@ import {
   getValueDistribution,
   getInOutTrend,
   getHealthScore,
-  getSupplyPointComparison
+  getSupplyPointComparison,
+  getFilterOptions
 } from '@/api/inventoryAnalysis'
-import { getSupplyPointList } from '@/api/supplyPoint'
-import { getSparePartList } from '@/api/sparePart'
 
 export default {
   name: 'InventoryAnalysis',
@@ -382,19 +381,12 @@ export default {
   methods: {
     async loadFilters() {
       try {
-        const [pointRes, partRes] = await Promise.all([
-          getSupplyPointList(),
-          getSparePartList({ page: 1, size: 1000 })
-        ])
-        this.supplyPoints = pointRes.data?.records || pointRes.data || []
-        const categories = new Set()
-        const parts = partRes.data?.records || partRes.data || []
-        parts.forEach(p => {
-          if (p.category) categories.add(p.category)
-        })
-        this.categories = Array.from(categories)
+        const res = await getFilterOptions()
+        this.supplyPoints = res.data?.supplyPoints || []
+        this.categories = res.data?.categories || []
       } catch (e) {
         console.error('加载筛选条件失败', e)
+        this.$message.error('加载筛选条件失败')
       }
     },
     async loadAllData() {

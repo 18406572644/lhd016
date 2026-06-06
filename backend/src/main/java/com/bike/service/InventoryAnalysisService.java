@@ -3,6 +3,7 @@ package com.bike.service;
 import com.bike.entity.dto.*;
 
 import java.util.List;
+import java.util.Map;
 
 public interface InventoryAnalysisService {
 
@@ -19,4 +20,6 @@ public interface InventoryAnalysisService {
     InventoryHealthScoreVO getInventoryHealthScore();
 
     List<SupplyPointComparisonVO> getSupplyPointComparison();
+
+    Map<String, Object> getFilterOptions();
 }
